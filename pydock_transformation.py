@@ -1,12 +1,13 @@
 """
 ProFlex PyDock poses filtration
 """
-# TODO Que funcione interface analyser dentro de rotate_nd_translate, ver si quitar returns
+# TODO from_new_coord_to_ca_for_pdb needs to improve the spaces bc PyMol does not read properly
 ######################## INTERFACE ANALYSER CODE EXTRACTED FROM interface_analyser.py eacbc3c ###########
 import argparse
 from biopandas.pdb import PandasPdb
 import numpy as np
 import pandas as pd
+import copy
 def get_pdb_atoms_df(pdb_file):
     ppdb = PandasPdb().read_pdb(pdb_file)
     return ppdb.df['ATOM'] # only keeps information related to atoms
@@ -37,7 +38,7 @@ def get_interface_residues_by_chain(chain1: str, chain2: str, distance_threshold
         'Z_2': residues_interface_2['z_coord'].values,     # REMOVE?
         'Distance': distances[close_residues]
     })
-    return residues_interface_1, residues_interface_2, detected_distances
+    return residues_interface_1, residues_interface_2
 
 def amplify_selection_residues(int, chainrelevant):
     i = 0
@@ -79,12 +80,12 @@ def get_interface_residues_by_each_chain(pdb_file, distance_threshold=6) -> (np.
     chain_2 = get_chain(atom_df_ca, chain_ids[1])
     chain1_relevant = get_relevant_columns(chain_1)
     chain2_relevant = get_relevant_columns(chain_2)
-    int1, int2, interactions = get_interface_residues_by_chain(chain1_relevant, chain2_relevant, distance_threshold)
+    int1, int2 = get_interface_residues_by_chain(chain1_relevant, chain2_relevant, distance_threshold)
     intchain1additional = amplify_selection_residues(int1, chain1_relevant)
     intchain2additional = amplify_selection_residues(int2, chain2_relevant)
-    return int1, int2, interactions, intchain1additional, intchain2additional
+    return intchain1additional, intchain2additional
 
-#################################
+###################################################################################################
 def get_only_coords(chain):
     desired_cols = ['x_coord', 'y_coord', 'z_coord']
     x = chain[desired_cols]
@@ -92,7 +93,22 @@ def get_only_coords(chain):
     print(" ")
     return x
 
-def rotate_and_translate(coords, rotation_translation):
+def from_new_coord_to_ca(newcoord, lig_coord):
+    chain = copy.deepcopy(lig_coord) # so that the original chain is not affected (doesnt matter...)
+    chain.iloc[:, 3] = newcoord.iloc[:, 0]
+    chain.iloc[:, 4] = newcoord.iloc[:, 1]
+    chain.iloc[:, 5] = newcoord.iloc[:, 2]
+    return chain
+
+def from_new_coord_to_ca_for_pdb(newcoord, lig_ca):
+    newcoord = newcoord.round(3)
+    lig_ca.iloc[:, 11] = newcoord.iloc[:, 0]
+    lig_ca.iloc[:, 12] = newcoord.iloc[:, 1]
+    lig_ca.iloc[:, 13] = newcoord.iloc[:, 2]
+    return lig_ca
+
+def rotate_and_translate(coords, rotation_translation): ### This function works: gives new coordinates from a rot+tran
+                                                        # matrix ###
     """Applies rotation and translation matrix to a set of coordinates."""
     new_coords = []
     i = 0
@@ -116,14 +132,59 @@ def rotate_and_translate(coords, rotation_translation):
                 df = pd.DataFrame(new_coords, columns=['x_coord', 'y_coord', 'z_coord'])
                 i += 1
                 print("Log: advancing till the rot+transl matrix row number:", i)
-
-                # test interface
-
                 new_coords = []
-
     return df
 
-hola = rotate_and_translate(lcotest,rttest)
+def rotate_and_translate_and_filter(coords, rotation_translation):
+    rot_transl_result = []
+    new_coords = []
+    u = 0
+    while u <= len(rotation_translation)-1:
+        for coord in coords.values:
+            new_x = (rotation_translation.values[u][0] * coord[0] +
+                     rotation_translation.values[u][1] * coord[1] +
+                     rotation_translation.values[u][2] * coord[2] +
+                     rotation_translation.values[u][9])
+            new_y = (rotation_translation.values[u][3] * coord[0] +
+                     rotation_translation.values[u][4] * coord[1] +
+                     rotation_translation.values[u][5] * coord[2] +
+                     rotation_translation.values[u][10])
+            new_z = (rotation_translation.values[u][6] * coord[0] +
+                     rotation_translation.values[u][7] * coord[1] +
+                     rotation_translation.values[u][8] * coord[2] +
+                     rotation_translation.values[u][11])
+            new_coords.append([new_x, new_y, new_z])
+
+            if len(new_coords) == len(coords):
+                df = pd.DataFrame(new_coords, columns=['x_coord', 'y_coord', 'z_coord'])
+
+                new_lig = from_new_coord_to_ca(df, lig_coord)
+                print("generating new chain from new_coord")
+
+                int1, int2 = get_interface_residues_by_chain(rec_coord, new_lig, 6)
+                int2_ampli = amplify_selection_residues(int2, new_lig)
+                print("calculated interfaces")
+                cdr3_res = [105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117]
+                # res 105 --- res 118 belong to cd3
+                for w in cdr3_res:
+                    if w in int2_ampli.values[:, 1]:
+                        rot_transl_result.append(rotation_translation.values[u])
+                        break
+
+                print("verified filtration criterion")
+                u += 1
+                print("Log: advancing till the rot+transl matrix row number:", u)
+                new_coords = []
+
+    column_names = [
+        'Column1', 'Column2', 'Column3', 'Column4', 'Column5', 'Column6',
+        'Column7', 'Column8', 'Column9', 'Column10', 'Column11', 'Column12',
+        'Label'
+    ]
+    rot_transl_result_df = pd.DataFrame(rot_transl_result, columns=column_names)
+
+
+    return rot_transl_result_df
 
 pdb_file_rec = "apo_pd1_6umv_noMt_optH_minH-DOCK-Q15116_20_1.51_igfold_imgt_rec.pdb"
 pdb_file_lig = "apo_pd1_6umv_noMt_optH_minH-DOCK-Q15116_20_1.51_igfold_imgt_lig.pdb"
@@ -144,4 +205,18 @@ rotation_translation = pd.read_table(rot_file_pydock, delim_whitespace=True, hea
     'Label'
 ])
 
+rttest = rotation_translation.head(50)
+filtered_poses = rotate_and_translate_and_filter(lig_coord_only, rttest) # runs 50 per 1-2 sec
 
+## pdb example
+
+filtered_poses = filtered_poses.head(3) # la sig linea me saca la pose para los parametros de la 3 linea
+forth_pose = rotate_and_translate(lig_coord_only, filtered_poses)
+forth_pose_coord = from_new_coord_to_ca(forth_pose, lig_coord)
+forth_pose_coord = forth_pose_coord.round(3)
+get_interface_residues_by_chain(rec_coord, forth_pose_coord) # testing whether B
+                                                             # chain CDRH3 in interface
+
+new_pdb = from_new_coord_to_ca_for_pdb(forth_pose, lig_ca)
+ruta = "/Users/ismaelbd01/Desktop/Máster/4_PRACTICUM/ProFlex_prject/resultado.pdb"
+new_pdb.to_csv(ruta, header=None, index=None, sep=' ', mode='a')
