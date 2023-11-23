@@ -12,6 +12,10 @@ def get_pdb_atoms_df(pdb_file):
     return ppdb.df['ATOM'] # only keeps information related to atoms
 def get_ca(atom_df):
     return atom_df[atom_df['atom_name'] == 'CA']
+def get_chain(atom_df, chain_name):
+    print("Obtaining different protein chains:", chain_name)
+    print(" ")
+    return atom_df[atom_df['chain_id'] == chain_name]
 def get_relevant_columns(chain):
     desired_cols = ['chain_id', 'residue_number', 'residue_name', 'x_coord', 'y_coord', 'z_coord']
     x = chain[desired_cols]
@@ -188,6 +192,29 @@ def from_new_coord_to_wholedf(newcoord, lig):
     lig.iloc[:, 13] = newcoord.iloc[:, 2]
     return lig
 
+def generate_new_poses(pdb_file_lig, filtered_poses):
+    """
+    Generates new poses for a ligand by applying a (filtered or not) rot+transl matrix
+    """
+    f_poses = copy.deepcopy(filtered_poses)
+    lig_atoms = get_pdb_atoms_df(pdb_file_lig)
+    lig_atoms_coord = get_only_coords(lig_atoms)
+    c = 0
+    w = 0
+    while len(f_poses)>0:
+        row = f_poses.head(1)
+        new_coords = rotate_and_translate(lig_atoms_coord, row)
+        # Always "Log: advancing till the rot+transl matrix row number: 1" bc row = filtered_poses.head(1)
+        # This can be solved by deleting the logging action in functions or the index "i"
+        new_lig = from_new_coord_to_wholedf(new_coords, lig_atoms)
+        ppdb = PandasPdb().read_pdb(pdb_file_lig)
+        ppdb.df['ATOM'] = new_lig
+        ppdb.to_pdb(path= "output"+str(w)+".pdb", records = ['ATOM', 'HETATM',
+                                           'OTHERS'], gz=False) # w+1 to start output numbers from 1 and not from 0
+        f_poses.drop(c, axis=0, inplace=True)
+        c += 1
+        w += 1
+
 ###### Testing rotate_and_translate and rotate_and_translate_and_filter #####
 
 pdb_file_rec = "apo_pd1_6umv_noMt_optH_minH-DOCK-Q15116_20_1.51_igfold_imgt_rec.pdb"
@@ -210,25 +237,4 @@ rotation_translation = pd.read_table(rot_file_pydock, delim_whitespace=True, hea
 ])
 rttest = rotation_translation.head(50)
 filtered_poses = rotate_and_translate_and_filter(lig_coord_only, rttest)
-
-### TODO FUNCTIONS
-"""
-1) Cargar un PDB con biopandas (var name biop)
-2) Hacer una copia, porque lo modificaremos despues ( updated_biop = biop.copy())
-3) Del objeto biopandas, coger los atomos (old_coord = updated_biop["ATOMS"])
-4) Hacer cambios de coordenadas ( new_lig_coord = funcion_tuya_rotation(old_coord, pydock_rot_mat))
-5) Modificar el biopandas que queremos guardar. ( updated_biop["ATOMS"] = new_lig_coord.copy() )
-6) Exportar: updated_biop.to_pdb(...)
-"""
-first_pose_rottrans = filtered_poses.drop(0)
-first_pose_rottrans = first_pose_rottrans.drop(0)
-first_pose_rottrans = first_pose_rottrans.head(1)
-lig_atoms = get_pdb_atoms_df(pdb_file_lig)
-lig_atoms_coord = get_only_coords(lig_atoms)
-new_coords = rotate_and_translate(lig_atoms_coord, first_pose_rottrans)
-new_lig = from_new_coord_to_wholedf(new_coords, lig_atoms)
-ppdb = PandasPdb().read_pdb(pdb_file_lig)
-ppdb.df['ATOM'] = new_lig
-ppdb.to_pdb(path= "output3.pdb", records = ['ATOM', 'HETATM',
-                                           'OTHERS'], gz=False)
-
+generate_new_poses(pdb_file_lig, filtered_poses)
