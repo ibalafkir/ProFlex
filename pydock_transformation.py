@@ -142,12 +142,9 @@ def rotate_and_translate_and_filter(coords, rotation_translation):
         # len(coords) == len(new_coords)
 
         df = pd.DataFrame(new_coords, columns=['x_coord', 'y_coord', 'z_coord'])
-
         new_lig = from_new_coord_to_ca(df, lig_coord)
         print("generating new chain from new_coord")
-
         int1, int2 = get_interface_residues_by_chain(rec_coord, new_lig, 6)
-
         print("calculated interfaces")
         # starting filtration criteria
         cdr3_res = [105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117]
@@ -215,8 +212,7 @@ def generate_new_poses(pdb_file_lig, filtered_poses):
         c += 1
         w += 1
 
-###### Testing rotate_and_translate and rotate_and_translate_and_filter #####
-
+pdb_file = 'B_PD1_diff_8_prep_relax_fixed.pdb'
 pdb_file_rec = "apo_pd1_6umv_noMt_optH_minH-DOCK-Q15116_20_1.51_igfold_imgt_rec.pdb"
 pdb_file_lig = "apo_pd1_6umv_noMt_optH_minH-DOCK-Q15116_20_1.51_igfold_imgt_lig.pdb"
 rot_file_pydock = "apo_pd1_6umv_noMt_optH_minH-DOCK-Q15116_20_1.51_igfold_imgt.rot"
@@ -238,3 +234,33 @@ rotation_translation = pd.read_table(rot_file_pydock, delim_whitespace=True, hea
 rttest = rotation_translation.head(50)
 filtered_poses = rotate_and_translate_and_filter(lig_coord_only, rttest)
 generate_new_poses(pdb_file_lig, filtered_poses)
+
+def generate_new_poses_from_whole_pdb(pdb_file, filtered_poses):
+    """
+    Generates new poses for one chain around the other chain
+    from the interaction pdb file and filtered poses df.
+    Cuando no da bien es porque rotate_and_translate_and_filter
+    y rotate_and_translate se hacen llamando al pdb del receptor,
+    que tiene coordenadas distintas al pdb de los dos
+    """
+    f_poses = copy.deepcopy(filtered_poses)
+    atom_df = get_pdb_atoms_df(pdb_file)
+    lig_atoms = get_chain(atom_df, 'B')
+    lig_atoms_coord = get_only_coords(lig_atoms)
+    c = 0
+    w = 0
+    while len(f_poses)>0:
+        row = f_poses.head(1)
+        new_coords = rotate_and_translate(lig_atoms_coord, row)
+        # Always "Log: advancing till the rot+transl matrix row number: 1" bc row = filtered_poses.head(1)
+        # This can be solved by deleting the logging action in functions or the index "i"
+        new_lig = from_new_coord_to_wholedf(new_coords, lig_atoms)
+        ppdb.df['ATOM'][ppdb.df['ATOM']['chain_id'] == 'B'] = new_lig
+
+        ppdb.to_pdb(path= "output"+str(w)+".pdb", records = ['ATOM', 'HETATM',
+                                           'OTHERS'], gz=False) # w+1 to start output numbers from 1 and not from 0
+        f_poses.drop(c, axis=0, inplace=True)
+        c += 1
+        w += 1 #
+
+
