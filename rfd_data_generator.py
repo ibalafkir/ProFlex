@@ -1,7 +1,8 @@
 """
-Generates data for RFD experiments
+Generates the codes that indicate the regions to diffuse in RFDiffusion
+Input from commandline: PDB with both proteins interacting and the chains to analyze interface
 """
-## Functions from interface_analyser
+## Functions from interface_analyzer 8de0854
 import argparse
 from biopandas.pdb import PandasPdb
 import numpy as np
@@ -9,45 +10,69 @@ import pandas as pd
 import copy
 
 def get_pdb_atoms_df(pdb_file):
+    """
+    Extracts ATOM information from a PDB file and returns a pandas DataFrame
+    :param Path to PDB file: str
+    :return Pandas DataFrame: pandas.DataFrame
+    """
     ppdb = PandasPdb().read_pdb(pdb_file)
-    print("Reading PDB file")
-    print(" ")
+    print("Extracting atom information from PDB... \n")
     return ppdb.df['ATOM'] # only keeps information related to atoms
 
 def get_ca(atom_df):
-    print("Filtering CA")
-    print(" ")
+    """
+    Extracts CA rows from a pandas DataFrame with ATOM information
+    :param Pandas DataFrame with ATOM information: pandas.DataFrame
+    :return Pandas DataFrame with CA information: pandas.DataFrame
+    """
+    print("Getting alpha carbons... \n")
     return atom_df[atom_df['atom_name'] == 'CA']
 
 def get_chains_id(atom_df):
+    """
+    Extracts ID chains from a pandas DataFrame with ATOM information
+    :param Pandas DataFrame with ATOM information: pandas.DataFrame
+    :return List with chains ID: list
+    """
     result=[]
     array = pd.unique(atom_df["chain_id"])
     for i in array:
         result.append(i)
-    print("Obtaining chains' identification")
-    print(" ")
+    print("Obtaining chains' identification... \n")
     return result
 
-def get_chain(atom_df, chain_name):
-    print("Obtaining different protein chains:", chain_name)
-    print(" ")
-    return atom_df[atom_df['chain_id'] == chain_name]
+def get_chain(df, chain_name):
+    """
+    Returns pandas DataFrame with the ATOM information of an input chain
+    :param Pandas DataFrame with ATOM information (CA atom_names, all atom_names...):
+           pandas.DataFrame
+    :return Pandas DataFrame with ATOM information of an indicated chain:
+            pandas.DataFrame
+    """
+    print("Obtaining different protein chains...:", chain_name, "\n")
+    return df[df['chain_id'] == chain_name]
 
 def get_relevant_columns(chain):
+    """
+    Extracts "relevant columns" from an ATOM PDB pandas DatFrame. These are:
+    chain_id, residue_number, residue_name, x_coord, y_coord, z_coord
+    :param Atom DataFrame: pandas.DataFrame
+    :return Atom DataFrame with relevant columns
+    """
     desired_cols = ['chain_id', 'residue_number', 'residue_name', 'x_coord', 'y_coord', 'z_coord']
     x = chain[desired_cols]
-    print("Filtering relevant columns of chain", chain['chain_id'].values[0])
-    print(" ")
+    print("Filtering relevant columns of chain", chain['chain_id'].values[0], "... \n")
     return x
 
-def get_interface_residues_by_chain(chain1: str, chain2: str, distance_threshold=6) -> (np.array, np.array, np.array):
+def get_interface_residues_by_chain(chain1: str, chain2: str, distance_threshold=6):
     """
-    Extraction of interface residues by a vectorised calculus of the distance between CA atoms
-    :param chain1: str
-    :param chain2: str
-    :param distance_threshold: float
-    :return: 2 np.arrays containing interface residues from each chain
-             1 np.array containing interface residues and distance
+    Extraction of interface residues, meaning residues which CA are at a maximum given distance
+    (default = 6 Angstrom), which is the maximum distance up to which interaction is considered
+    to occur
+    :param First chain ID: str
+    :param Second chain ID: str
+    :param Distance threshold: float
+    :return 2 np.arrays containing interface residues from each chain
     """
     coords_1 = chain1[['x_coord', 'y_coord', 'z_coord']].values
     coords_2 = chain2[['x_coord', 'y_coord', 'z_coord']].values
@@ -55,24 +80,28 @@ def get_interface_residues_by_chain(chain1: str, chain2: str, distance_threshold
     close_residues = np.where(distances <= distance_threshold)
     residues_interface_1 = chain1.iloc[close_residues[0]]
     residues_interface_2 = chain2.iloc[close_residues[1]]
-    detected_distances = pd.DataFrame({
-        'First chain residue': residues_interface_1['residue_name'].values,
-        'Residue number 1': residues_interface_1['residue_number'].values,
-        'X_1': residues_interface_1['x_coord'].values,     # REMOVE?
-        'Y_1': residues_interface_1['y_coord'].values,     # REMOVE?
-        'Z_1': residues_interface_1['z_coord'].values,     # REMOVE?
-        'Second chain residue': residues_interface_2['residue_name'].values,
-        'Residue number 2': residues_interface_2['residue_number'].values,
-        'X_2': residues_interface_2['x_coord'].values,     # REMOVE?
-        'Y_2': residues_interface_2['y_coord'].values,     # REMOVE?
-        'Z_2': residues_interface_2['z_coord'].values,     # REMOVE?
-        'Distance': distances[close_residues]
-    })
-    print("Calculating distances")
-    print(" ")
-    return residues_interface_1, residues_interface_2, detected_distances
-
+    #detected_distances = pd.DataFrame({
+    #    'First chain residue': residues_interface_1['residue_name'].values,
+    #    'Residue number 1': residues_interface_1['residue_number'].values,
+    #    'X_1': residues_interface_1['x_coord'].values,
+    #    'Y_1': residues_interface_1['y_coord'].values,
+    #    'Z_1': residues_interface_1['z_coord'].values,
+    #    'Second chain residue': residues_interface_2['residue_name'].values,
+    #    'Residue number 2': residues_interface_2['residue_number'].values,
+    #    'X_2': residues_interface_2['x_coord'].values,
+    #    'Y_2': residues_interface_2['y_coord'].values,
+    #    'Z_2': residues_interface_2['z_coord'].values,
+    #    'Distance': distances[close_residues]
+    #})
+    print("Calculating distances... \n")
+    return residues_interface_1, residues_interface_2
 def amplify_selection_residues(int, chainrelevant):
+    """
+    Amplifies the selected residues in a DataFrame by neighborhood = 2
+    :param pandas.DataFrame of a chain with interacting residues: pandas.DataFrame
+    :param pandas.DataFrame of the chain with which the interaction DataFrame was generated: pandas.DataFrame
+    :return: pandas.DataFrame of a chain with interacting residues amplified by neighborhood = 2: pandas.DataFrame
+    """
     i = 0
     total_dif = []
     res_num = sorted(int['residue_number'].values)
@@ -102,8 +131,7 @@ def amplify_selection_residues(int, chainrelevant):
         i += 1
     int_sorted = int.sort_values(by='residue_number')
     int_sorted_unique = int_sorted.drop_duplicates()
-    print("Detecting additional interactions (neighbourhood = 2) residues for diffusion processes of chain", chainrelevant['chain_id'].values[0])
-    print(" ")
+    print("Detecting additional interactions (neighborhood = 2) residues for diffusion processes of chain", chainrelevant['chain_id'].values[0], "... \n")
     return int_sorted_unique
 
 ####### New functions
@@ -138,20 +166,29 @@ def get_chunks(lst):
         result.append(subgroup)
     for i in result: # quitar
         if len(i)==1: # si
-            result.remove(i) # no quieres residuos solos en plan [1,2,3], [5], [8, 9, 10]
+            result.remove(i) # no quieres residuos solos en plan [1,2,3], [5], [8, 9, 10], no cuenta el 5
     return result
 
-def get_contigs_rfd(pdb_file):
-    atom_df = get_pdb_atoms_df(pdb_file)
-    atom_df_ca = get_ca(atom_df)
-    chain_ids = get_chains_id(atom_df_ca)
-    chain_1 = get_chain(atom_df_ca, chain_ids[0])
-    chain_2 = get_chain(atom_df_ca, chain_ids[1])
-    chain1_relevant = get_relevant_columns(chain_1)
-    chain2_relevant = get_relevant_columns(chain_2)
-    int1, int2, interactions = get_interface_residues_by_chain(chain1_relevant, chain2_relevant, distance_threshold=8)
-    intchain1additional = amplify_selection_residues(int1, chain1_relevant)
-    intchain2additional = amplify_selection_residues(int2, chain2_relevant)
+def chunk_filter(lst):
+    """
+    :param lst: list
+    :return list without elements of length < 3 so as not to diffuse regions of less than 3 aas: list
+    """
+    result = []
+    for i in lst:
+        if len(i)>2:
+            result.append(i)
+    return result
+
+def get_contigs_rfd(chain_1, chain_2, intchain1additional, intchain2additional):
+    """
+    id1 and id2 are indicated from terminal.
+    :param chain_1:
+    :param chain_2:
+    :param intchain1additional:
+    :param intchain2additional:
+    :return:
+    """
 
     chain_1 = delete_res_tag(chain_1)
     chain_2 = delete_res_tag(chain_2)
@@ -166,22 +203,48 @@ def get_contigs_rfd(pdb_file):
     intera2_resnum = get_resnum_list(intera2)
     intera1_lst = get_chunks(intera1_resnum)
     intera2_lst = get_chunks(intera2_resnum)
+    intera1_lst = chunk_filter(intera1_lst)
+    intera2_lst = chunk_filter(intera2_lst)
 
-    contig = f"A{chain1_start}-"
+    contig = f"{id1}{chain1_start}-"
     for curr_list in intera1_lst:
         list_start = curr_list[0]
         list_end = curr_list[len(curr_list)-1]
-        contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/A{list_end+1}-"
+        contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id1}{list_end+1}-"
     contig = contig[:len(contig)-1] + f"-{chain1_end}" + "/0 "
 
-    contig += f"B{chain2_start}-"
+    contig += f"{id2}{chain2_start}-"
     for curr_list in intera2_lst:
         list_start = curr_list[0]
         list_end = curr_list[len(curr_list)-1]
-        contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/B{list_end+1}-"
+        contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id2}{list_end+1}-"
     contig += f"{chain2_end}"
     return contig
-########
 
-pdb_file = "B_PD1_diff_8_prep_relax_fixed.pdb"
-print(get_contigs_rfd(pdb_file))
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description='Returns diffusion code from a PDB file')
+    parser.add_argument('pdb_file', type=str, help='Path to the PDB file')
+    parser.add_argument('id1', type=str, help='First chain')
+    parser.add_argument('id2', type=str, help='Second chain')
+    args = parser.parse_args()
+    pdb_file = args.pdb_file
+    id1 = args.id1
+    id2 = args.id2
+
+    ####### CODE
+    atom_df = get_pdb_atoms_df(pdb_file)
+    atom_df_ca = get_ca(atom_df)
+    chain_ids = get_chains_id(atom_df_ca)
+    chain_1 = get_chain(atom_df_ca, id1)
+    chain_2 = get_chain(atom_df_ca, id2)
+    chain1_relevant = get_relevant_columns(chain_1)
+    chain2_relevant = get_relevant_columns(chain_2)
+    int1, int2 = get_interface_residues_by_chain(chain1_relevant, chain2_relevant, distance_threshold=8)
+    intchain1additional = amplify_selection_residues(int1, chain1_relevant)
+    intchain2additional = amplify_selection_residues(int2, chain2_relevant)
+    print(get_contigs_rfd(chain_1, chain_2, intchain1additional, intchain2additional))
+    #######
+
+
+
+
