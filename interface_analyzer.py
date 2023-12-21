@@ -200,9 +200,9 @@ def analayze_interface(pdb_file, id1, id2, distance_threshold):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Calculates interface residues between two chains of PDB file')
-    parser.add_argument('pdb_file', type=str, help='Path to the PDB file')
-    parser.add_argument('id1', type=str, help='First chain')
-    parser.add_argument('id2', type=str, help='Second chain')
+    parser.add_argument('--pdb_file', type=str, help='Path to the PDB file')
+    parser.add_argument('--id1', type=str, help='First chain')
+    parser.add_argument('--id2', type=str, help='Second chain')
     parser.add_argument('--distance_threshold', type=float,
                         help='Distance threshold for interface '
                              'residues (6 Angstrom is default)', default=6)
@@ -226,3 +226,8 @@ if __name__ == "__main__":
         print(intchain2additional)
     else:
         print("Interactions could not be detected at the distance threshold of", distance_threshold, "Angstroms")
+
+# Lo del if main:
+# "Si este script se está ejecutando como el programa principal (no importado como módulo), entonces realiza las siguientes acciones".
+# Esto es útil cuando tienes código que te gustaría ejecutar solo cuando el script se ejecute directamente, y no cuando se importe
+# como un módulo en otro script. En caso de importar como módulo se ejecuta everything menos el if main
