@@ -185,7 +185,7 @@ def amplify_selection_residues(int, chainrelevant):
     print("Detecting additional interactions (neighborhood = 2) residues for diffusion processes of chain", chainrelevant['chain_id'].values[0], "... \n")
     return int_sorted_unique
 
-def analayze_interface(pdb_file, id1, id2, distance_threshold):
+def analyze_interface(pdb_file, id1, id2, distance_threshold):
     atom_df = get_pdb_atoms_df(pdb_file)
     atom_df_ca = get_ca(atom_df)
     chain_1 = get_chain(atom_df_ca, id1)
@@ -211,7 +211,7 @@ if __name__ == "__main__":
     id1 = args.id1
     id2 = args.id2
     distance_threshold = args.distance_threshold
-    int1, int2, intchain1additional, intchain2additional = analayze_interface(pdb_file, 'A', 'B', distance_threshold)
+    int1, int2, intchain1additional, intchain2additional = analyze_interface(pdb_file, args.id1, args.id2, distance_threshold)
 
     if not int1.empty and not int2.empty:
         pd.set_option('display.max_rows', None)
@@ -226,8 +226,3 @@ if __name__ == "__main__":
         print(intchain2additional)
     else:
         print("Interactions could not be detected at the distance threshold of", distance_threshold, "Angstroms")
-
-# Lo del if main:
-# "Si este script se está ejecutando como el programa principal (no importado como módulo), entonces realiza las siguientes acciones".
-# Esto es útil cuando tienes código que te gustaría ejecutar solo cuando el script se ejecute directamente, y no cuando se importe
-# como un módulo en otro script. En caso de importar como módulo se ejecuta everything menos el if main
