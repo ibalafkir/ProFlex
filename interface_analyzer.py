@@ -33,6 +33,17 @@ def get_ca(atom_df):
     print("Getting alpha carbons... \n")
     return atom_df[atom_df['atom_name'] == 'CA']
 
+def delete_res_tag(df):
+    def delete_numbers_in_string(string):
+        if isinstance(string, str):
+            return ''.join(c for c in string if c.isdigit())
+        else:
+            return str(string)
+
+    # Utiliza .loc para evitar SettingWithCopyWarning
+    df.loc[:, 'residue_number'] = df['residue_number'].apply(delete_numbers_in_string)
+    df['residue_number'] = df['residue_number'].astype(int)
+    return df
 def get_chains_id(atom_df):
     """
     Extracts ID chains from a pandas DataFrame with ATOM information
@@ -187,6 +198,7 @@ def amplify_selection_residues(int, chainrelevant):
 
 def analyze_interface(pdb_file, id1, id2, distance_threshold):
     atom_df = get_pdb_atoms_df(pdb_file)
+    atom_df = delete_res_tag(atom_df)
     atom_df_ca = get_ca(atom_df)
     chain_1 = get_chain(atom_df_ca, id1)
     chain_2 = get_chain(atom_df_ca, id2)
