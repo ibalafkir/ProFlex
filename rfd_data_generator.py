@@ -2,6 +2,8 @@
 Generates the codes that indicate the regions to diffuse in RFDiffusion
 Input from commandline: PDB with both proteins interacting and the chains to analyze interface
 """
+# TODO Solve issue that happens when the first or last residue of a chain needs to be diffunded
+
 ## Functions from interface_analyzer 8de0854
 import argparse
 from biopandas.pdb import PandasPdb
@@ -134,19 +136,6 @@ def amplify_selection_residues(int, chainrelevant):
     print("Detecting additional interactions (neighborhood = 2) residues for diffusion processes of chain", chainrelevant['chain_id'].values[0], "... \n")
     return int_sorted_unique
 
-####### New functions
-def delete_res_tag(df):
-    def delete_numbers_in_string(string):
-        if isinstance(string, str):
-            return ''.join(c for c in string if c.isdigit())
-        else:
-            return str(string)
-
-    # Utiliza .loc para evitar SettingWithCopyWarning
-    df.loc[:, 'residue_number'] = df['residue_number'].apply(delete_numbers_in_string)
-
-    return df
-
 def get_resnum_list(df):
     result = []
     for i in df['residue_number']:
@@ -190,17 +179,12 @@ def get_contigs_rfd(chain_1, chain_2, intchain1additional, intchain2additional):
     :return:
     """
 
-    chain_1 = delete_res_tag(chain_1)
-    chain_2 = delete_res_tag(chain_2)
-    intera1 = delete_res_tag(intchain1additional)
-    intera2 = delete_res_tag(intchain2additional)
-
     chain1_start = get_resnum_list(chain_1)[0]
     chain1_end = get_resnum_list(chain_1)[len(chain_1)-1]
     chain2_start = get_resnum_list(chain_2)[0]
     chain2_end = get_resnum_list(chain_2)[len(chain_2)-1]
-    intera1_resnum = get_resnum_list(intera1)
-    intera2_resnum = get_resnum_list(intera2)
+    intera1_resnum = get_resnum_list(intchain1additional)
+    intera2_resnum = get_resnum_list(intchain2additional)
     intera1_lst = get_chunks(intera1_resnum)
     intera2_lst = get_chunks(intera2_resnum)
     intera1_lst = chunk_filter(intera1_lst)
@@ -223,13 +207,17 @@ def get_contigs_rfd(chain_1, chain_2, intchain1additional, intchain2additional):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Returns diffusion code from a PDB file')
-    parser.add_argument('pdb_file', type=str, help='Path to the PDB file')
-    parser.add_argument('id1', type=str, help='First chain')
-    parser.add_argument('id2', type=str, help='Second chain')
+    parser.add_argument('--pdb_file', type=str, help='Path to the PDB file')
+    parser.add_argument('--id1', type=str, help='First chain')
+    parser.add_argument('--id2', type=str, help='Second chain')
+    parser.add_argument('--distance_threshold', type=float,
+                        help='Distance threshold for interface '
+                             'residues (6 Angstrom is default)', default=6)
     args = parser.parse_args()
     pdb_file = args.pdb_file
     id1 = args.id1
     id2 = args.id2
+    distance_threshold = args.distance_threshold
 
     ####### CODE
     atom_df = get_pdb_atoms_df(pdb_file)
@@ -239,7 +227,7 @@ if __name__ == "__main__":
     chain_2 = get_chain(atom_df_ca, id2)
     chain1_relevant = get_relevant_columns(chain_1)
     chain2_relevant = get_relevant_columns(chain_2)
-    int1, int2 = get_interface_residues_by_chain(chain1_relevant, chain2_relevant, distance_threshold=8)
+    int1, int2 = get_interface_residues_by_chain(chain1_relevant, chain2_relevant, distance_threshold=distance_threshold)
     intchain1additional = amplify_selection_residues(int1, chain1_relevant)
     intchain2additional = amplify_selection_residues(int2, chain2_relevant)
     print(get_contigs_rfd(chain_1, chain_2, intchain1additional, intchain2additional))
