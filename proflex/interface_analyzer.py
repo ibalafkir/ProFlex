@@ -200,8 +200,7 @@ if __name__ == "__main__":
     id1 = args.id1
     id2 = args.id2
     distance_threshold = args.distance_threshold
-    pdb_instance = PDBUtils(pdb_file)
-    int1, int2, intchain1additional, intchain2additional = analyze_interface(pdb_instance, args.id1, args.id2, distance_threshold)
+    int1, int2, intchain1additional, intchain2additional = analyze_interface(pdb_file, args.id1, args.id2, distance_threshold)
 
     if not int1.empty and not int2.empty:
         pd.set_option('display.max_rows', None)
