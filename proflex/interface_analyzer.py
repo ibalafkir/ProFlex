@@ -13,7 +13,6 @@ from proflex.utils.pdb_interface_analyzer import InterfaceAnalyzer
 def analyze_interface(pdb_file, id1, id2, distance_threshold):
 
     atom_df = PDBUtils.get_pdb_atoms_df(pdb_file)
-    atom_df = PDBUtils.delete_res_tag(atom_df)
     atom_df_ca = PDBUtils.get_ca(atom_df)
     chain_1 = PDBUtils.get_chain(atom_df_ca, id1)
     chain_2 = PDBUtils.get_chain(atom_df_ca, id2)

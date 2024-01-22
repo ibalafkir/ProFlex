@@ -2,6 +2,7 @@ from biopandas.pdb import PandasPdb
 
 
 class PDBUtils:
+    @staticmethod
     def get_pdb_atoms_df(pdb_file):
         """
         Extracts ATOM information from a PDB file and returns a pandas DataFrame
@@ -21,19 +22,6 @@ class PDBUtils:
         """
         print("Getting alpha carbons... \n")
         return atom_df[atom_df['atom_name'] == 'CA']
-
-    @staticmethod
-    def delete_res_tag(df):
-        def delete_numbers_in_string(string):
-            if isinstance(string, str):
-                return ''.join(c for c in string if c.isdigit())
-            else:
-                return str(string)
-
-        # Uses .loc to avoid SettingWithCopyWarning
-        df.loc[:, 'residue_number'] = df['residue_number'].apply(delete_numbers_in_string)
-        df['residue_number'] = df['residue_number'].astype(int)
-        return df
 
     @staticmethod
     def get_chain(df, chain_name):
