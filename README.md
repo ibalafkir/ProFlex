@@ -8,6 +8,10 @@ conda create -n proflex python=3.10
 conda activate proflex
 pip install biopandas
 pip install pdb-tools
+pip install numpy
+pip install pandas
+pip install copy
+pip install argparse
 ```
 
 ## Install the package
