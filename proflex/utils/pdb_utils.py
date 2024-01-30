@@ -33,7 +33,10 @@ class PDBUtils:
                 pandas.DataFrame
         """
         print("Obtaining different protein chains...:", chain_name, "\n")
-        return df[df['chain_id'] == chain_name]
+        result = df[df['chain_id'] == chain_name]
+        if len(result) == 0: # if the input chain_name is absent, the df will have size 0
+            raise ValueError('Error: the input chain name is absent')
+        return result
 
     @staticmethod
     def get_relevant_columns(chain):

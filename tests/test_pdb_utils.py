@@ -46,7 +46,6 @@ class TestPDBUtils:
 
     @pytest.mark.parametrize("missing_chain", ['C', 'D'])
     def test_get_chain_when_its_not_in_pdb(self, sample_atom_df, missing_chain):
-        # TODO Update PDBUtils.get_chain to raise a ValueError when the chain is not in the PDB
         with pytest.raises(ValueError):
             PDBUtils.get_chain(sample_atom_df, missing_chain)
 
