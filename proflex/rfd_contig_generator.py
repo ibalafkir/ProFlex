@@ -81,8 +81,10 @@ def get_contigs(chain_1, chain_2, intchain1additional, intchain2additional):
         list_end = curr_list[len(curr_list)-1]
         contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id2}{list_end+1}-"
     contig += f"{chain2_end}"
+    contig = '['+contig+']'
     return contig
 
+print("HOLA")
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Returns diffusion contig code from a PDB file'
@@ -110,4 +112,3 @@ if __name__ == "__main__":
     intchain1additional = InterfaceAnalyzer.amplify_selection_residues(int1, chain1_relevant)
     intchain2additional = InterfaceAnalyzer.amplify_selection_residues(int2, chain2_relevant)
     print(get_contigs(chain_1, chain_2, intchain1additional, intchain2additional))
-    #######
