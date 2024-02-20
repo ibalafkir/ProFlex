@@ -12,6 +12,7 @@ pip install numpy
 pip install pandas
 pip install copy
 pip install argparse
+pip install pdb-tools
 ```
 
 ## Install the package

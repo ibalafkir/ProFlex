@@ -1,14 +1,12 @@
 """
 ProFlex interface analyzer of the interface of the interaction between 2 proteins (chain 1 and chain 2)
-Code organization: libraries, functions and executions. The execution will be done by inputting the PDB file,
-both chain IDs to study interactions and a maximum distance threshold up to which 2 residues are considered
-to be interacting. The user needs to select which chains will study.
+The execution will is done by inputting the PDB file, both chain IDs to study interactions and a maximum distance
+threshold up to which 2 residues are considered to be interacting. The user needs to select the chains to study.
 """
 import argparse
-import numpy as np
 import pandas as pd
 from proflex.utils import PDBUtils
-from proflex.utils.pdb_interface_analyzer import InterfaceAnalyzer
+from proflex.utils import InterfaceAnalyzer
 
 def analyze_interface(pdb_file, id1, id2, distance_threshold):
 
