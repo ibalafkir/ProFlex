@@ -5,7 +5,7 @@ insertion codes that antibodies usually have
 
 from pdbtools import pdb_fixinsert
 
-class PDBAdaptor:
+class PDBProcessor:
     
     def extract_without_extension(n):
         """
@@ -26,7 +26,7 @@ class PDBAdaptor:
         :return Solved PDB file
         """
         f = open(n, "rt")
-        f_fixed = open(PDBAdaptor.extract_without_extension(n)+'_fixed.pdb', "wt")
+        f_fixed = open(PDBProcessor.extract_without_extension(n)+'_fixed.pdb', "wt")
         lines = f.readlines()
         #f.seek(0)
         for modified_line in pdb_fixinsert.run(lines, []):

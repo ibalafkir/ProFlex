@@ -1,5 +1,5 @@
 import argparse
-from proflex.utils import PDBAdaptor
+from proflex.utils import PDBProcessor
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
@@ -10,5 +10,5 @@ if __name__ == "__main__":
     args = parser.parse_args()
     
     pdb_file = args.pdb 
-    PDBAdaptor.fix_insertions(pdb_file)
-    PDBAdaptor.fix_ter_mistakes(PDBAdaptor.extract_without_extension(pdb_file)+'_fixed.pdb')
+    PDBProcessor.fix_insertions(pdb_file)
+    PDBProcessor.fix_ter_mistakes(PDBProcessor.extract_without_extension(pdb_file)+'_fixed.pdb')
