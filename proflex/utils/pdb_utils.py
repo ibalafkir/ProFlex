@@ -10,8 +10,18 @@ class PDBUtils:
         :return Pandas DataFrame: pandas.DataFrame
         """
         ppdb = PandasPdb().read_pdb(pdb_file)
-        print("Extracting atom information from PDB... \n")
+        # print("Extracting atom information from PDB... \n")
         return ppdb.df['ATOM'] # only keeps information related to atoms
+    
+    @staticmethod
+    def get_chains_id(atom_df):
+        result=[]
+        array = pd.unique(atom_df["chain_id"])
+        for i in array:
+            result.append(i)
+        # print("Obtaining chains' identification")
+        # print(" ")
+        return result
 
     @staticmethod
     def get_ca(atom_df):
@@ -20,7 +30,7 @@ class PDBUtils:
         :param Pandas DataFrame with ATOM information: pandas.DataFrame
         :return Pandas DataFrame with CA information: pandas.DataFrame
         """
-        print("Getting alpha carbons... \n")
+        # print("Getting alpha carbons... \n")
         return atom_df[atom_df['atom_name'] == 'CA']
 
     @staticmethod
@@ -32,7 +42,7 @@ class PDBUtils:
         :return Pandas DataFrame with ATOM information of an indicated chain:
                 pandas.DataFrame
         """
-        print("Obtaining different protein chains...:", chain_name, "\n")
+        # print("Obtaining different protein chains...:", chain_name, "\n")
         result = df[df['chain_id'] == chain_name]
         if len(result) == 0: # if the input chain_name is absent, the df will have size 0
             raise ValueError('Error: the input chain name is absent')
@@ -48,5 +58,5 @@ class PDBUtils:
         """
         desired_cols = ['chain_id', 'residue_number', 'residue_name', 'x_coord', 'y_coord', 'z_coord']
         x = chain[desired_cols]
-        print("Filtering relevant columns of chain", chain['chain_id'].values[0], "... \n")
+        # print("Filtering relevant columns of chain", chain['chain_id'].values[0], "... \n")
         return x
