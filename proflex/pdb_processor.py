@@ -9,6 +9,8 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
     
-    pdb_file = args.pdb 
+    pdb_file = args.pdb
     PDBProcessor.fix_insertions(pdb_file)
-    PDBProcessor.fix_ter_mistakes(PDBProcessor.extract_without_extension(pdb_file)+'_fixed.pdb')
+    PDBProcessor.fix_ter_mistakes(PDBProcessor.extract_without_extension(pdb_file)+'_insfixed.pdb')
+    PDBProcessor.remove_other_lines(PDBProcessor.extract_without_extension(pdb_file)+'_insfixed'+'_terfixed.pdb')
+    PDBProcessor.del_mid_files(pdb_file)
