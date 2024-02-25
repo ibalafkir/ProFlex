@@ -5,6 +5,9 @@ insertion codes that antibodies usually have
 
 from pdbtools import pdb_fixinsert
 import os
+from biopandas.pdb import PandasPdb
+from pdbtools import pdb_tidy, pdb_selatom
+from proflex.utils import PDBUtils
 
 class PDBProcessor:
     
@@ -90,3 +93,96 @@ class PDBProcessor:
         os.rename(pdb_name_removed, pdb_name+'_processed.pdb')
         os.remove(pdb_name_insfixed)
         os.remove(pdb_name_terfixed)
+
+class RFDFixer:
+    
+    """
+    TODO ADD A FUNCTION TO RECUPERATE SIDECHAINS AND THEIR COORDINATES FROM RESIDUES IN RIGID REGIONS (CONTIGS)
+    """
+    
+    def get_n_atoms(pdb):
+        """
+        Gets number of atoms assuming the last ATOM line has the highest atom number and that
+        all atoms are followed: e.g. 1-2-3... and not 1-3-5... with jumps
+        Input: PDB file, a RFD output pdb fulfills previous conditions
+        
+        All atom renumber problems can be easily solved with pdbtools
+        
+        """
+        pdb_df = PDBUtils.get_pdb_atoms_df(pdb)
+        n_atoms = pdb_df['atom_number'].iloc[-1]
+        return n_atoms
+    
+    def pdb_backbone(pdb):
+        """
+        Deletes all atoms but the ones belonging to the backbone
+        Does not touch other lines (headers...)
+        In the fixing of RFD output PDBs approach, serves with pdb_atom to modify
+        the preRFD-PDB to make possible the comparison with postRFD-PDB
+        """
+        pdb_backbone = pdb[:len(pdb)-4]+'_backbone.pdb'
+        f = open(pdb, 'rt')
+        f_backbone = open(pdb_backbone, 'wt')
+        lines = f.readlines()        
+        for modified_line in pdb_selatom.run(lines, ['CA','C','N','O']):
+            f_backbone.write(modified_line)
+        f.close()
+        f_backbone.close()
+
+
+    def pdb_atom(pdb):
+        """
+        Keeps only atom lines
+        """
+        pdb_atom = pdb[:len(pdb)-4]+'_atom.pdb'
+        ppdb = PandasPdb().read_pdb(pdb)
+        ppdb.to_pdb(path= pdb_atom, records = ['ATOM'], gz=False)
+
+
+    def correct_rfd_pdbs(pdb_rfd, pdb_before_rfd_backbone_atom):
+        """
+        Assigns chain ID and residues ID from a the input PDB to RFD in
+        the output PDB of RFD
+        """
+        pdb_rfd_df = PDBUtils.get_pdb_atoms_df(pdb_rfd)
+        pdb_before_rfd_backbone_atom_df = PDBUtils.get_pdb_atoms_df(pdb_before_rfd_backbone_atom)
+        pdb_rfd_df['chain_id'] = pdb_before_rfd_backbone_atom_df['chain_id']
+        pdb_rfd_df['residue_number'] = pdb_before_rfd_backbone_atom_df['residue_number']
+        
+        pdb_rfd_fixed_name = pdb_rfd[:len(pdb_rfd)-4]+ "_chainsfixed.pdb"
+        pdb_rfd_chainsfixed = PandasPdb().read_pdb(pdb_rfd)
+        pdb_rfd_chainsfixed.df['ATOM'] = pdb_rfd_df
+        pdb_rfd_chainsfixed.to_pdb(path= pdb_rfd_fixed_name, records = ['ATOM'], gz=False)   
+
+
+    def pdb_tidying(pdb):
+        """
+        Detects chain ID changes to assign TER and END lines
+        """
+        pdb_tidied = pdb[:len(pdb)-4]+'_tidied.pdb'
+        f = open(pdb, 'rt')
+        f_tidied = open(pdb_tidied, 'wt')
+        lines = f.readlines()        
+        for modified_line in pdb_tidy.run(lines, False):
+            f_tidied.write(modified_line)
+        f.close()
+        f_tidied.close()
+
+ 
+    def del_mid_files(pdb_before_rfd, pdb_rfd):
+        """
+        Deletes temporal files that previous functions create to
+        correct the PDB
+        """
+        pdb_name = pdb_before_rfd[:len(pdb_before_rfd)-4]
+        pdb_file_backbone = pdb_name+'_backbone.pdb'
+        pdb_file_backbone_atom = pdb_file_backbone[:len(pdb_file_backbone)-4]+'_atom.pdb'
+
+        pdb_rfd_name = pdb_rfd[:len(pdb_rfd)-4]
+        pdb_rfd_file_chainsfixed = pdb_rfd_name+'_chainsfixed.pdb'
+        pdb_rfd_file_chainsfixed_tidied = pdb_rfd_file_chainsfixed[:len(pdb_rfd_file_chainsfixed)-4]+'_tidied.pdb'
+
+        os.rename(pdb_rfd_file_chainsfixed_tidied, pdb_rfd_name+'_rfdfixed.pdb')
+        os.remove(pdb_file_backbone)
+        os.remove(pdb_file_backbone_atom)
+        os.remove(pdb_rfd_file_chainsfixed)

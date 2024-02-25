@@ -1,5 +1,5 @@
 from biopandas.pdb import PandasPdb
-
+import pandas as pd
 
 class PDBUtils:
     @staticmethod
