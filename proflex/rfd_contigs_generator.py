@@ -3,7 +3,7 @@ Generates the contig codes that indicate the regions to diffuse in RFDiffusion
 Input from commandline: PDB with both proteins interacting and the chains to analyze interface
 """
 
-# TODO Solve issue that happens when the first or last residue of a chain needs 
+# TODO Pending to solve the issue that happens when the first or last residue of a chain needs 
 # to be diffunded
 
 from proflex.utils import PDBUtils
@@ -12,8 +12,6 @@ import argparse
 from biopandas.pdb import PandasPdb
 import numpy as np
 import pandas as pd
-
-####################
 
 def get_resnum_list(df):
     result = []
@@ -32,9 +30,12 @@ def get_chunks(lst):
             subgroup = [num]
     if subgroup:
         result.append(subgroup)
-    for i in result: # quitar
-        if len(i)==1: # si
-            result.remove(i) # no quieres residuos solos en plan [1,2,3], [5], [8, 9, 10], no cuenta el 5
+    
+    # Deletes isolate residue numbers like 5 in [1,2,3], [5], [8, 9, 10] 
+    
+    for i in result: 
+        if len(i)==1: 
+            result.remove(i) 
     return result
 
 def chunk_filter(lst):
@@ -84,10 +85,10 @@ def get_contigs(chain_1, chain_2, intchain1additional, intchain2additional):
     contig = '['+contig+']'
     return contig
 
-print("HOLA")
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
-        description='Returns diffusion contig code from a PDB file'
+        description='Returns RFdiffusion contig code from a PDB file'
         )
     parser.add_argument('--pdb', type=str, help='Path to the PDB file')
     parser.add_argument('--id1', type=str, help='First chain')

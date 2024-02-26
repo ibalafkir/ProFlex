@@ -53,9 +53,13 @@ class PDBProcessor:
                     atom_index = line.find("ATOM")
                     if atom_index != -1:
                         f_output.write(line[atom_index:])  
-                    CONECT_index = line.find("CONECT")
-                    if CONECT_index != -1:
-                        f_output.write(line[CONECT_index:])
+                    
+                    # Conect lines are not included in the fixed PDB because the bonds between atoms
+                    # are infered by the protein residue numbers
+                    # CONECT_index = line.find("CONECT")
+                    # if CONECT_index != -1:
+                    #     f_output.write(line[CONECT_index:])
+                    
                 else:
                     f_output.write(line)
       
