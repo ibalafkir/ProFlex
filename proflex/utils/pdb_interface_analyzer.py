@@ -2,10 +2,7 @@ import numpy as np
 import pandas as pd
 
 class InterfaceAnalyzer:
-    """"
-    Calculates interacting residues between 2 given proteins
-    """
-    
+
     def get_interface_residues_by_chain(chain1: str, chain2: str, distance_threshold=6):
         """
         Extraction of interface residues, meaning residues which CA are at a maximum given distance
@@ -35,7 +32,7 @@ class InterfaceAnalyzer:
             'Z_2': residues_interface_2['z_coord'].values,
             'Distance': distances[close_residues]
         })
-        print("Calculating distances... \n")
+        # print("Calculating distances... \n")
         return residues_interface_1, residues_interface_2, detected_interactions
 
     def get_interaction_distances(chain1: str, chain2: str, distance_threshold=6):
@@ -67,7 +64,7 @@ class InterfaceAnalyzer:
             'Z_2': residues_interface_2['z_coord'].values,
             'Distance': distances[close_residues]
         })
-        print("Calculating distances... \n")
+        # print("Calculating distances... \n")
         return detected_distances
 
     def amplify_selection_residues(int, chainrelevant):
@@ -106,5 +103,5 @@ class InterfaceAnalyzer:
             i += 1
         int_sorted = int.sort_values(by='residue_number')
         int_sorted_unique = int_sorted.drop_duplicates()
-        print("Detecting additional interactions (neighborhood = 2) residues for diffusion processes of chain", chainrelevant['chain_id'].values[0], "... \n")
+        # print("Detecting additional interactions (neighborhood = 2) residues for diffusion processes of chain", chainrelevant['chain_id'].values[0], "... \n")
         return int_sorted_unique
