@@ -1,17 +1,15 @@
 """
 Generates the contig codes that indicate the regions to diffuse in RFDiffusion
 Input from commandline: PDB with both proteins interacting and the chains to analyze interface
-"""
 
-# TODO Pending to solve the issue that happens when the first or last residue of a chain needs 
-# to be diffunded
+Example:
+
+python rfd_contigs_generator.py --pdb B_PD1_diff_8_prep_relax_fixed.pdb --id1 A --id2 B --distance_threshold 200
+"""
 
 from proflex.utils import PDBUtils
 from proflex.utils.pdb_interface_analyzer import InterfaceAnalyzer
 import argparse
-from biopandas.pdb import PandasPdb
-import numpy as np
-import pandas as pd
 
 def get_resnum_list(df):
     result = []
@@ -69,20 +67,82 @@ def get_contigs(chain_1, chain_2, intchain1additional, intchain2additional):
     intera1_lst = chunk_filter(intera1_lst)
     intera2_lst = chunk_filter(intera2_lst)
 
-    contig = f"{id1}{chain1_start}-"
-    for curr_list in intera1_lst:
-        list_start = curr_list[0]
-        list_end = curr_list[len(curr_list)-1]
-        contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id1}{list_end+1}-"
-    contig = contig[:len(contig)-1] + f"-{chain1_end}" + "/0 "
+    # First chain
 
-    contig += f"{id2}{chain2_start}-"
-    for curr_list in intera2_lst:
-        list_start = curr_list[0]
-        list_end = curr_list[len(curr_list)-1]
-        contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id2}{list_end+1}-"
-    contig += f"{chain2_end}"
-    contig = '['+contig+']'
+    if chain1_start in intera1_resnum and chain1_end in intera1_resnum:
+        contig = f"{chain1_end-chain1_start+1}-{chain1_end-chain1_start+1}"
+      
+    elif chain1_start in intera1_resnum and chain1_end not in intera1_resnum:
+        
+        # Checks if only the last residue is considered rigid
+        c = 0
+        if len(intera1_resnum) == chain1_end-chain1_start: # only chain1_end residue is excluded
+            c += 1
+            contig = f"{chain1_end-chain1_start+1}-{chain1_end-chain1_start+1}/{id1}{chain1_end}"
+            
+        if c == 0:
+            contig = f"{intera1_lst[0][-1]-intera1_lst[0][0]+1}-{intera1_lst[0][-1]-intera1_lst[0][0]+1}/{id1}"
+            contig = contig + f"{intera1_lst[0][-1]+1}-"
+            intera1_lst = intera1_lst[1:]
+            for curr_list in intera1_lst:
+                list_start = curr_list[0]
+                list_end = curr_list[len(curr_list)-1]
+                contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id1}{list_end+1}-"
+            contig = contig[:len(contig)-1] + f"-{chain1_end}"
+    
+    elif chain1_start not in intera1_lst and chain1_start+1 in intera1_resnum:
+        
+        contig = f"{id1}"
+        for curr_list in intera1_lst:
+            list_start = curr_list[0]
+            list_end = curr_list[len(curr_list)-1]
+            contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id1}{list_end+1}-"
+        contig = contig[:len(contig)-1] + f"-{chain1_end}"
+      
+    else: 
+        contig = f"{id1}{chain1_start}-"
+        for curr_list in intera1_lst:
+            list_start = curr_list[0]
+            list_end = curr_list[len(curr_list)-1]
+            contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id1}{list_end+1}-"
+        contig = contig[:len(contig)-1] + f"-{chain1_end}"
+    
+    ## Change of chain ######
+    
+    contig += "/0 "
+    
+    #########################
+    
+    # Second chain
+    
+    if chain2_start in intera2_resnum and chain2_end in intera2_resnum:
+        contig += f"{chain2_end-chain2_start+1}-{chain2_end-chain2_start+1}"
+
+    elif chain2_start in intera2_resnum and chain2_end not in intera2_resnum:
+        c = 0
+        if len(intera2_resnum) == chain2_end-chain2_start: # only chain1_end residue is excluded
+            c += 1
+            contig += f"{chain2_end-chain2_start+1}-{chain2_end-chain2_start+1}"
+                
+        if c == 0:
+            contig += f"{intera2_lst[0][-1]-intera2_lst[0][0]+1}-{intera2_lst[0][-1]-intera2_lst[0][0]+1}/{id2}"
+            contig = contig + f"{intera2_lst[0][-1]+1}-"
+            intera2_lst = intera2_lst[1:]
+            for curr_list in intera2_lst:
+                list_start = curr_list[0]
+                list_end = curr_list[len(curr_list)-1]
+                contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id2}{list_end+1}-"
+            contig = contig[:len(contig)-1] + f"-{chain1_end}"
+                
+    else:
+        contig += f"{id2}{chain2_start}-"
+        for curr_list in intera2_lst:
+            list_start = curr_list[0]
+            list_end = curr_list[len(curr_list)-1]
+            contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id2}{list_end+1}-"
+        contig += f"{chain2_end}"
+    
+    contig = '['+contig+']'    
     return contig
 
 
