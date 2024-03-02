@@ -41,22 +41,28 @@ def get_pele_com_distance(int1, int2, id1, id2):
         return result
     int1_resnum = int1['residue_number'].to_list()
     int1_resnum_sorted_unique = sorted(del_repeated(int1_resnum))
-    int1_resnum_sorted_unique_chname = [f"{id1}:" + str(elemento) for elemento in int1_resnum_sorted_unique]
-
+    int1_resnum_sorted_unique_chname = [f"{id1}:" + str(element) for element in int1_resnum_sorted_unique]
+    int1_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int1_resnum_sorted_unique_chname]
+    pele_code_1 = ', '.join(int1_resnum_sorted_unique_chname_mod)
+    
     int2_resnum = int2['residue_number'].to_list()
     int2_resnum_sorted_unique = sorted(del_repeated(int2_resnum))
-    int2_resnum_sorted_unique_chname = [f"{id2}:" + str(elemento) for elemento in int2_resnum_sorted_unique]
+    int2_resnum_sorted_unique_chname = [f"{id2}:" + str(element) for element in int2_resnum_sorted_unique]
+    int2_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int2_resnum_sorted_unique_chname]
+    pele_code_2 = ', '.join(int2_resnum_sorted_unique_chname_mod)
+
+
 
     print("{")
-    print('\t"type":"com_distance",')
-    print(f'\t"tag":"{id1}{id2}_distance",')
+    print('"type":"com_distance",')
+    print(f'"tag":"{id1}{id2}_distance",')
     print('\t"selection_group_1":{')
-    print('\t\t"links": { "ids":' + str(int1_resnum_sorted_unique_chname) + '}')
-    print('\t},')
+    print('\t\t"links": { "ids":[' + str(pele_code_1) + ']}')
+    print('\t\t},')
     print('\t"selection_group_2":{')
-    print('\t\t"links": { "ids":' + str(int2_resnum_sorted_unique_chname) + '}')
-    print('\t}')
-    print("}")  
+    print('\t\t"links": { "ids":[' + str(pele_code_2) + ']}')
+    print('\t\t}')
+    print("},")  
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Calculates interface residues between two chains of PDB file')
@@ -87,7 +93,7 @@ if __name__ == "__main__":
         print(intchain1additional, "\n")
         print("Additional interacting residues (neighborhood = 2 residues) in chain", id2)
         print(intchain2additional, "\n")
-        print("Code for PELE com_distance metric")
+        print("Code for PELE com_distance metric \n")
         get_pele_com_distance(int1, int2, id1, id2)
     else:
         print("Interactions could not be detected at the distance threshold of", distance_threshold, "Angstroms")

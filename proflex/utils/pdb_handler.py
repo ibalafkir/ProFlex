@@ -5,6 +5,7 @@ insertion codes that antibodies usually have
 
 from pdbtools import pdb_fixinsert
 import os
+import pandas as pd
 from biopandas.pdb import PandasPdb
 from pdbtools import pdb_tidy, pdb_selatom
 from proflex.utils import PDBUtils
@@ -100,10 +101,6 @@ class PDBProcessor:
 
 class RFDFixer:
     
-    """
-    TODO ADD A FUNCTION TO RECUPERATE SIDECHAINS AND THEIR COORDINATES FROM RESIDUES IN RIGID REGIONS (CONTIGS)
-    """
-    
     def get_n_atoms(pdb):
         """
         Gets number of atoms assuming the last ATOM line has the highest atom number and that
@@ -190,3 +187,31 @@ class RFDFixer:
         os.remove(pdb_file_backbone)
         os.remove(pdb_file_backbone_atom)
         os.remove(pdb_rfd_file_chainsfixed)
+
+"""
+# TODO developing rfd side chain readder
+
+import os
+
+os.chdir('/Users/ismaelbd01/Desktop')
+
+rfd = 'Ab_diff_N05_0_rfdfixed.pdb'
+pre = '4pou.pdb'
+
+rfd_pdb = PandasPdb().read_pdb(rfd)
+rfd_atom = PDBUtils.get_pdb_atoms_df(rfd)
+
+pre_pdb = PandasPdb().read_pdb(pre)
+pre_atom = PDBUtils.get_pdb_atoms_df(pre)
+
+
+
+# A: 111, 112, 113, 114, 115
+
+fixed_rfd = pd.DataFrame()
+
+for index, row in hola.iterrows():
+    adios.loc[indice] = fila
+    
+
+"""
