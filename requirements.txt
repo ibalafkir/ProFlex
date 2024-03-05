@@ -6,3 +6,4 @@ copy
 argparse
 pdb-tools
 os
+mdtraj

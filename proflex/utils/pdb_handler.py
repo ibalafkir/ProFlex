@@ -9,6 +9,7 @@ import pandas as pd
 from biopandas.pdb import PandasPdb
 from pdbtools import pdb_tidy, pdb_selatom
 from proflex.utils import PDBUtils
+import mdtraj as md
 
 class PDBProcessor:
     
@@ -187,31 +188,19 @@ class RFDFixer:
         os.remove(pdb_file_backbone)
         os.remove(pdb_file_backbone_atom)
         os.remove(pdb_rfd_file_chainsfixed)
-
-"""
-# TODO developing rfd side chain readder
-
-import os
-
-os.chdir('/Users/ismaelbd01/Desktop')
-
-rfd = 'Ab_diff_N05_0_rfdfixed.pdb'
-pre = '4pou.pdb'
-
-rfd_pdb = PandasPdb().read_pdb(rfd)
-rfd_atom = PDBUtils.get_pdb_atoms_df(rfd)
-
-pre_pdb = PandasPdb().read_pdb(pre)
-pre_atom = PDBUtils.get_pdb_atoms_df(pre)
-
-
-
-# A: 111, 112, 113, 114, 115
-
-fixed_rfd = pd.DataFrame()
-
-for index, row in hola.iterrows():
-    adios.loc[indice] = fila
     
+    def superpose(pdb1, pdb2, output):
+        """
+        pdb1 contains reference coordinates
+        pdb2 contains the moving coordinates in the superimposition
+        """
+        traj1 = md.load_pdb(pdb1)
+        traj2 = md.load_pdb(pdb2)
+        backbone_atoms_1 = traj1.topology.select("backbone") # 
+        backbone_atoms_2 = traj2.topology.select("backbone") # 
 
-"""
+        traj1_backbone = traj1.atom_slice(backbone_atoms_1)
+        traj2_backbone = traj2.atom_slice(backbone_atoms_2)
+
+        superposed_traj2 = traj2_backbone.superpose(traj1_backbone)
+        superposed_traj2.save(output)

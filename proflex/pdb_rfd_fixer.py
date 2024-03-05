@@ -1,6 +1,16 @@
 from proflex.utils import RFDFixer
 import argparse
 
+""""
+# TODO developing rfd side chain readder
+
+import os
+
+os.chdir('/Users/ismaelbd01/Desktop')
+
+rfd = 'Ab_diff_N05_0_rfdfixed.pdb'
+pre = '4pou.pdb'
+"""
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(
