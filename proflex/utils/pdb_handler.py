@@ -7,9 +7,10 @@ from pdbtools import pdb_fixinsert
 import os
 import pandas as pd
 from biopandas.pdb import PandasPdb
-from pdbtools import pdb_tidy, pdb_selatom
+from pdbtools import pdb_tidy, pdb_selatom, pdb_sort, pdb_reatom
 from proflex.utils import PDBUtils
 import mdtraj as md
+
 
 class PDBProcessor:
     
@@ -84,7 +85,22 @@ class PDBProcessor:
                     continue # We don't write them
                 f_output.write(line)
     
-    
+
+    def pdb_atomrenumber(pdb, atom_number):
+        """
+        Renumbers a PDB from the desired atom_number
+        """
+        pdb_atomsorted = pdb[:len(pdb)-4]+'_atomsorted.pdb'
+        f = open(pdb, 'rt')
+        f_atomsorted = open(pdb_atomsorted, 'wt')
+        lines = f.readlines()        
+        for modified_line in pdb_reatom.run(lines, atom_number):
+            f_atomsorted.write(modified_line)
+        f.close()
+        f_atomsorted.close()
+
+
+        
     def del_mid_files(pdb):
         """
         Deletes all the files that previous functions but the last generate and renames the last
@@ -193,6 +209,7 @@ class RFDFixer:
         """
         pdb1 contains reference coordinates
         pdb2 contains the moving coordinates in the superimposition
+        # TODO Superpose only backbone/CA of rigid residues (not the designed ones by RFdiffusion)
         """
         traj1 = md.load_pdb(pdb1)
         traj2 = md.load_pdb(pdb2)
@@ -204,3 +221,17 @@ class RFDFixer:
 
         superposed_traj2 = traj2_backbone.superpose(traj1_backbone)
         superposed_traj2.save(output)
+    
+    def pdb_sorting(pdb):
+        """ Sorts a PDB according to chain ID and residue number
+        """
+        pdb_sorted = pdb[:len(pdb)-4]+'_sorted.pdb'
+        f = open(pdb, 'rt')
+        f_sorted = open(pdb_sorted, 'wt')
+        lines = f.readlines()        
+        for modified_line in pdb_sort.run(lines, 'CR'): # 'CR' orders first by chain and then by residues
+            f_sorted.write(modified_line)
+        f.close()
+        f_sorted.close()
+    
+    
