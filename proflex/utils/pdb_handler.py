@@ -7,7 +7,7 @@ from pdbtools import pdb_fixinsert
 import os
 import pandas as pd
 from biopandas.pdb import PandasPdb
-from pdbtools import pdb_tidy, pdb_selatom, pdb_sort, pdb_reatom
+from pdbtools import pdb_tidy, pdb_selatom, pdb_sort, pdb_reatom, pdb_delelem
 from proflex.utils import PDBUtils
 import mdtraj as md
 
@@ -131,6 +131,35 @@ class RFDFixer:
         n_atoms = pdb_df['atom_number'].iloc[-1]
         return n_atoms
     
+    def pdb_delel(pdb, lst_el, output_name):
+        """
+        Deletes all elements indicated in the list
+        """
+        f = open(pdb, 'rt')
+        f_deleted = open(output_name, 'wt')
+        lines = f.readlines()        
+        for modified_line in pdb_delelem.run(lines, lst_el):
+            f_deleted.write(modified_line)
+        f.close()
+        f_deleted.close()
+        
+    
+    def pdb_delotherel(pdb, lst_el, output_name):
+        """
+        Deletes atom types indicated in the list apart from
+        the conventional ones (N, C, O, H; manageable by pdb_delel)
+        Used when the atom type is not manageable by pdb_delel
+        """
+        
+        pdb_atom_df = PDBUtils.get_pdb_atoms_df(pdb)
+        
+        for i in lst_el:
+            pdb_atom_df = pdb_atom_df[pdb_atom_df['atom_name'] != i]
+        
+        pdb_file = PandasPdb().read_pdb(pdb)
+        pdb_file.df['ATOM'] = pdb_atom_df
+        pdb_file.to_pdb(path= output_name, records = ['ATOM'], gz=False) 
+    
     def pdb_backbone(pdb):
         """
         Deletes all atoms but the ones belonging to the backbone
@@ -159,8 +188,10 @@ class RFDFixer:
 
     def correct_rfd_pdbs(pdb_rfd, pdb_before_rfd_backbone_atom):
         """
-        Assigns chain ID and residues ID from a the input PDB to RFD in
-        the output PDB of RFD
+        Assigns chain ID and residues ID (using the input PDB in RFD) 
+        to the output of RFD
+        Both must have the same atom lines
+        
         """
         pdb_rfd_df = PDBUtils.get_pdb_atoms_df(pdb_rfd)
         pdb_before_rfd_backbone_atom_df = PDBUtils.get_pdb_atoms_df(pdb_before_rfd_backbone_atom)
@@ -221,6 +252,23 @@ class RFDFixer:
 
         superposed_traj2 = traj2_backbone.superpose(traj1_backbone)
         superposed_traj2.save(output)
+    
+    
+    def superpose_v2(pdb1, pdb2, output):
+            """ 
+            pdb1 contains reference coordinates
+            pdb2 contains the moving coordinates in the superimposition
+            PDB1 AND PDB2, THROUGH THIS WAY, MUST HAVE THE SAME NUMBER OF ATOMS!!! OTHERWISE IT DOESN'T WORK
+            # TODO Superpose only backbone/CA of rigid residues (not the designed ones by RFdiffusion)
+            """
+            pdb1_traj = md.load(pdb1)
+            pdb2_traj = md.load(pdb2)
+
+            # Superponer las estructuras minimizando el RMSD del pdb2 sobre el pdb1
+            aligned_traj = pdb2_traj.superpose(pdb1_traj)
+
+            # Guardar la estructura superpuesta
+            aligned_traj.save(output)
     
     def pdb_sorting(pdb):
         """ Sorts a PDB according to chain ID and residue number

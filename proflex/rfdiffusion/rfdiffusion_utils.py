@@ -221,14 +221,29 @@ class RFDSchains:
         atom_name_keep = ['N','CA', 'C', 'O']
             
         # Boolean mask strategy to know which rows will be deleted
-        # i.e. the ones that fulfil the next
+        # i.e. the ones that are not included in the mask
             
-        mask_delete_firstch = (df['chain_id'].isin(half)) & \
-                        (~df['residue_number'].isin(half)) & \
+        mask_delete_ch = (df['chain_id'].isin(half)) & \
+                        (df['residue_number'].isin(half)) & \
                         (~df['atom_name'].isin(atom_name_keep))
             
-        df_filt = df[~mask_delete_firstch]
+        df_filt = df[~mask_delete_ch]
             
         return df_filt
 
-        
+    def get_sidechains(df, half):
+        """ Gets side chains of the given chain ID and residue numbers (contained in a list)
+                in an ATOM pandas dataframe of a PDB
+        """
+        atom_name_nokeep = ['N','CA', 'C', 'O']
+            
+        # Boolean mask strategy to know which rows will be deleted
+        # i.e. the ones that are not included in the mask
+            
+        mask_get_ch = (df['chain_id'].isin(half)) & \
+                        (df['residue_number'].isin(half)) & \
+                        (~df['atom_name'].isin(atom_name_nokeep))
+            
+        df_filt = df[mask_get_ch]
+            
+        return df_filt
