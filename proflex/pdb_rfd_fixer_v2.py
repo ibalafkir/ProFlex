@@ -1,5 +1,11 @@
 """
-PDB RFD FIXER TO SOLVE THE OUTPUT FORMAT OF RFD+ATTNPACKER, SUPERPOSE AND RECOVER RIGID SIDE CHAINS
+Version of pdb_rfd_fixer which solves the PDB format of an output PDB of RFd-AttnPacker (the first is
+inserted in the second without processing)
+
+With respect to version 1, this program tries to keep the repacking prediction of only flexible regions,
+that's why the contigs codes are needed, and recovering the rigid regions coordinates before diffunding
+the system. As RFd does a brief translation, a superposition to the non-diffunded system (input in RFd,
+aka prePDB in other logging statements)
 """
 
 from proflex.utils import RFDFixer, PDBUtils, PDBProcessor
@@ -48,7 +54,24 @@ if __name__ == "__main__":
     os.remove(post[:-4]+'_atom.pdb')
     os.remove(post[:-4]+'_atom_chainsfixed.pdb')
     os.remove(post[:-4]+'_atom_chainsfixed_tidied.pdb')
-    os.rename(post[:-4]+'_atom_chainsfixed_tidied_atomsorted.pdb', post[:-4]+'_fixed.pdb')
+    os.rename(post[:-4]+'_atom_chainsfixed_tidied_atomsorted.pdb', post[:-4]+'_rfdattnfixed.pdb')
+    
+    
+    
+    # os.remove(pre[:-4]+'_noh_atom_noOXT.pdb') # TODO IF THE SUPERPOSING PART IS DONE, DELETE THIS LINE
+
+    
+    
+    
+        ## HERE ONWARDS SUPERPOSITION AND OTHER PROCEDURES ARE DONE TO KEEP ONLY PREDICTIONS OF FLEXIBLE RESIDUES
+        ## IT WORKS PRETTY WELL :)))
+
+    
+    
+    
+
+
+    
     
                                     ####### SUPERPOSING AND RECOVERING RIGID SIDE CHAINS COORDINATES ########
     
@@ -62,7 +85,7 @@ if __name__ == "__main__":
     
     # Como esta funcion requiere mismo n de atomos, superponemos no con prePDB original sino con este tras quitarle
     # hidrogenos y oxt, que son atom types que attnpacker no añade
-    RFDFixer.superpose_v2(pre[:-4]+'_noh_atom_noOXT.pdb', post[:-4]+'_fixed.pdb', post[:-4]+'_fixed_superposed.pdb') 
+    RFDFixer.superpose_v2(pre[:-4]+'_noh_atom_noOXT.pdb', post[:-4]+'_rfdattnfixed.pdb', post[:-4]+'_rfdattnfixed_superposed.pdb') 
     os.remove(pre[:-4]+'_noh_atom_noOXT.pdb') # remove it as it is not needed anymore
 
     # Recovering side chains
@@ -70,13 +93,13 @@ if __name__ == "__main__":
     # rigid side chains with post_fixed with
     # flexible side chains, sort, tidy, renumber atoms
     
-    post_fixed_superposed_atomdf = PDBUtils.get_pdb_atoms_df(post[:-4]+'_fixed_superposed.pdb')
+    post_fixed_superposed_atomdf = PDBUtils.get_pdb_atoms_df(post[:-4]+'_rfdattnfixed_superposed.pdb')
     post_fixed_superposed_atomdf_norigidschains1 = RFDSchains.delete_sidechains(post_fixed_superposed_atomdf, half_1)
     post_fixed_superposed_atomdf_norigidschains1_norigidschains2 = RFDSchains.delete_sidechains(post_fixed_superposed_atomdf_norigidschains1, half_2)
     post_fixed_superposed_atomdf_norigidschains = post_fixed_superposed_atomdf_norigidschains1_norigidschains2
-    post_fixed_superposed_atomdf_norigidschains1_norigidschains2_topdb = PandasPdb().read_pdb(post[:-4]+'_fixed_superposed.pdb')
+    post_fixed_superposed_atomdf_norigidschains1_norigidschains2_topdb = PandasPdb().read_pdb(post[:-4]+'_rfdattnfixed_superposed.pdb')
     post_fixed_superposed_atomdf_norigidschains1_norigidschains2_topdb.df['ATOM'] = post_fixed_superposed_atomdf_norigidschains1_norigidschains2
-    post_fixed_superposed_atomdf_norigidschains1_norigidschains2_topdb.to_pdb(path= post[:-4]+'_fixed_superposed_norigidschains.pdb', records = ['ATOM'], gz=False)   
+    post_fixed_superposed_atomdf_norigidschains1_norigidschains2_topdb.to_pdb(path= post[:-4]+'_rfdattnfixed_superposed_norigidschains.pdb', records = ['ATOM'], gz=False)   
     
     pre_atomdf = PDBUtils.get_pdb_atoms_df(pre)
     pre_atomdf_rigidschains1 = RFDSchains.get_sidechains(pre_atomdf, half_1)
@@ -98,14 +121,17 @@ if __name__ == "__main__":
     
     PDBProcessor.pdb_atomrenumber(post[:len(post)-4]+'_disordered_sorted_tidied.pdb', 1)
     
-    os.remove(post[:-4]+'_fixed_superposed.pdb')
+    os.remove(post[:-4]+'_rfdattnfixed_superposed.pdb')
     os.remove(post[:-4]+'_disordered_sorted_tidied.pdb')
     os.remove(post[:-4]+'_disordered.pdb')
     os.remove(post[:-4]+'_disordered_sorted.pdb')
     os.remove(pre[:-4]+'_rigidschains.pdb')
-    os.remove(post[:-4]+'_fixed_superposed_norigidschains.pdb')
-    os.rename(post[:-4]+'_disordered_sorted_tidied_atomsorted.pdb', post[:-4]+ '_finished.pdb')
+    os.remove(post[:-4]+'_rfdattnfixed_superposed_norigidschains.pdb')
+    os.rename(post[:-4]+'_disordered_sorted_tidied_atomsorted.pdb', post[:-4]+ '_rfdattnprevrigidschainsfixed.pdb')
     
-    # Being _fixed.pdb the output of RFD+AttnPacker the format fixed version
-    # and _finished.pdb the final version of post RFD+AttnPacker PDB well formatted
+    # Being _rfdattnfixed.pdb the output of RFD+AttnPacker the format fixed version
+    # and _rfdattnprevrigidschainsfixed.pdb the final version of post RFD+AttnPacker PDB well formatted
     # with prePDB's rigid side chains and predicted flexible side chains
+
+    
+

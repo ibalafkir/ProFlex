@@ -7,34 +7,22 @@ from pdbtools import pdb_fixinsert
 import os
 import pandas as pd
 from biopandas.pdb import PandasPdb
-from pdbtools import pdb_tidy, pdb_selatom, pdb_sort, pdb_reatom, pdb_delelem
+from pdbtools import pdb_tidy, pdb_selatom, pdb_sort, pdb_reatom, pdb_delchain, pdb_delelem
 from proflex.utils import PDBUtils
 import mdtraj as md
 
 
 class PDBProcessor:
-    
-    def extract_without_extension(n):
-        """
-        Extracts path of PDB without the extension
-        :param Path to PDB file
-            str
-        :return Path to PDB file without extension
-            str
-        """
-        point_positions = [pos for pos, char in enumerate(n) if char == "."]
-        return n[0:point_positions[-1]]
-     
         
-    def fix_insertions(n):
+    def fix_insertions(pdb):
         """
         Does a renumbering deleting antibody insertion codes using pdb-tools
         TER lines tend to encounter errors (easily solved afterwards)
         :param Path to PDB
         :return Solved PDB file for insertion codes
         """
-        f = open(n, "rt")
-        f_fixed = open(PDBProcessor.extract_without_extension(n)+'_insfixed.pdb', "wt")
+        f = open(pdb, "rt")
+        f_fixed = open(pdb[:-4]+'_insfixed.pdb', "wt")
         lines = f.readlines()
         #f.seek(0)
         for modified_line in pdb_fixinsert.run(lines, []):
@@ -43,13 +31,13 @@ class PDBProcessor:
         f_fixed.close()
 
 
-    def fix_ter_mistakes(pdb_insfixed):
+    def fix_ter_mistakes(pdb):
         """
         Solves TER lines mistakes from the pdb-tools pdb_fixinsert tool
         :param Path to processed PDB
         :return Solved PDB file for TER lines
         """
-        with open(pdb_insfixed, "r") as f_input, open(PDBProcessor.extract_without_extension(pdb_insfixed)+'_terfixed.pdb', "w") as f_output:
+        with open(pdb, "r") as f_input, open(pdb[:-4]+'_terfixed.pdb', "w") as f_output:
             for line in f_input:
                 if line.startswith("TER"):
                     f_output.write("TER\n")
@@ -66,14 +54,13 @@ class PDBProcessor:
                 else:
                     f_output.write(line)
       
-        
-    def remove_other_lines(pdb_insfixed_terfixed):
+    def remove_hetatm(pdb):
         """
         Removes HETATM lines and their ANISOU lines (for now, other removals might be added here)
         :param Path to PDB
         :return PDB with previous lines removed
         """
-        with open(pdb_insfixed_terfixed, 'r') as f_input, open(PDBProcessor.extract_without_extension(pdb_insfixed_terfixed)+'_removed.pdb', "w") as f_output:
+        with open(pdb, 'r') as f_input, open(pdb[:-4]+'_nohetatm.pdb', "w") as f_output:
             c = 0 # Counter
             for line in f_input: # Start reading
                 if line.startswith('HETATM'): 
@@ -85,10 +72,37 @@ class PDBProcessor:
                     continue # We don't write them
                 f_output.write(line)
     
+    def remove_lines(pdb, lst):
+        with open(pdb, 'r') as f_input, open(pdb[:-4]+'_removed.pdb', "w") as f_output:
+            for line in f_input:
+                if not any(line.startswith(element) for element in lst):
+                    f_output.write(line)
+                    
+    
+    def pdb_keepchain(pdb,keep):
+        pdb_del = pdb[:-4]+'_ch.pdb'
+        
+        atom_df = PDBUtils.get_pdb_atoms_df(pdb)
+        chains_id = PDBUtils.get_chains_id(atom_df)
+        
+        delet = []
+        
+        for i in chains_id:
+            if i not in keep:
+                delet.append(i)
+        
+        f = open(pdb, 'rt')
+        f_del = open(pdb_del, 'wt')
+        lines = f.readlines()
+        for modified_line in pdb_delchain.run(lines, delet):
+            f_del.write(modified_line)    
 
-    def pdb_atomrenumber(pdb, atom_number):
+        f.close()
+        f_del.close()
+    
+    def pdb_atomrenumber(pdb, atom_number=1):
         """
-        Renumbers a PDB from the desired atom_number
+        Renumbers a PDB starting from the desired atom_number
         """
         pdb_atomsorted = pdb[:len(pdb)-4]+'_atomsorted.pdb'
         f = open(pdb, 'rt')
@@ -100,40 +114,11 @@ class PDBProcessor:
         f_atomsorted.close()
 
 
-        
-    def del_mid_files(pdb):
-        """
-        Deletes all the files that previous functions but the last generate and renames the last
-        to <pdb>_processed.pdb
-        :param Path to PDB
-
-        """
-        pdb_name = PDBProcessor.extract_without_extension(pdb)
-        pdb_name_insfixed = pdb_name + '_insfixed.pdb'
-        pdb_name_terfixed = PDBProcessor.extract_without_extension(pdb_name_insfixed)+'_terfixed.pdb'
-        pdb_name_removed = PDBProcessor.extract_without_extension(pdb_name_terfixed)+'_removed.pdb'
-        os.rename(pdb_name_removed, pdb_name+'_processed.pdb')
-        os.remove(pdb_name_insfixed)
-        os.remove(pdb_name_terfixed)
-
 class RFDFixer:
-    
-    def get_n_atoms(pdb):
-        """
-        Gets number of atoms assuming the last ATOM line has the highest atom number and that
-        all atoms are followed: e.g. 1-2-3... and not 1-3-5... with jumps
-        Input: PDB file, a RFD output pdb fulfills previous conditions
-        
-        All atom renumber problems can be easily solved with pdbtools
-        
-        """
-        pdb_df = PDBUtils.get_pdb_atoms_df(pdb)
-        n_atoms = pdb_df['atom_number'].iloc[-1]
-        return n_atoms
     
     def pdb_delel(pdb, lst_el, output_name):
         """
-        Deletes all elements indicated in the list
+        Deletes all atomic elements indicated in the list
         """
         f = open(pdb, 'rt')
         f_deleted = open(output_name, 'wt')
@@ -217,25 +202,7 @@ class RFDFixer:
         f.close()
         f_tidied.close()
 
- 
-    def del_mid_files(pdb_before_rfd, pdb_rfd):
-        """
-        Deletes temporal files that previous functions create to
-        correct the PDB
-        """
-        pdb_name = pdb_before_rfd[:len(pdb_before_rfd)-4]
-        pdb_file_backbone = pdb_name+'_backbone.pdb'
-        pdb_file_backbone_atom = pdb_file_backbone[:len(pdb_file_backbone)-4]+'_atom.pdb'
 
-        pdb_rfd_name = pdb_rfd[:len(pdb_rfd)-4]
-        pdb_rfd_file_chainsfixed = pdb_rfd_name+'_chainsfixed.pdb'
-        pdb_rfd_file_chainsfixed_tidied = pdb_rfd_file_chainsfixed[:len(pdb_rfd_file_chainsfixed)-4]+'_tidied.pdb'
-
-        os.rename(pdb_rfd_file_chainsfixed_tidied, pdb_rfd_name+'_rfdfixed.pdb')
-        os.remove(pdb_file_backbone)
-        os.remove(pdb_file_backbone_atom)
-        os.remove(pdb_rfd_file_chainsfixed)
-    
     def superpose(pdb1, pdb2, output):
         """
         pdb1 contains reference coordinates
