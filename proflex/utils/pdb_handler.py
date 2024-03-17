@@ -180,6 +180,13 @@ class RFDFixer:
         """
         pdb_rfd_df = PDBUtils.get_pdb_atoms_df(pdb_rfd)
         pdb_before_rfd_backbone_atom_df = PDBUtils.get_pdb_atoms_df(pdb_before_rfd_backbone_atom)
+        
+        if len(pdb_rfd_df) == len(pdb_before_rfd_backbone_atom_df):
+            print("Number of backbone atoms coincide thus the correction can be done\n")
+        else:
+            print("Number of backbone atoms do not coincide, check if any backbone atom is repeated and delete lines manually")
+            exit(1)
+
         pdb_rfd_df['chain_id'] = pdb_before_rfd_backbone_atom_df['chain_id']
         pdb_rfd_df['residue_number'] = pdb_before_rfd_backbone_atom_df['residue_number']
         

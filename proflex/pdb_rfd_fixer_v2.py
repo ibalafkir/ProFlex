@@ -58,10 +58,8 @@ if __name__ == "__main__":
     
     
     
-    # os.remove(pre[:-4]+'_noh_atom_noOXT.pdb') # TODO IF THE SUPERPOSING PART IS DONE, DELETE THIS LINE
+    os.remove(pre[:-4]+'_noh_atom_noOXT.pdb') # TODO IF THE SUPERPOSING PART IS DONE, DELETE THIS LINE
 
-    
-    
     
         ## HERE ONWARDS SUPERPOSITION AND OTHER PROCEDURES ARE DONE TO KEEP ONLY PREDICTIONS OF FLEXIBLE RESIDUES
         ## IT WORKS PRETTY WELL :)))
@@ -72,7 +70,7 @@ if __name__ == "__main__":
 
 
     
-    
+    """
                                     ####### SUPERPOSING AND RECOVERING RIGID SIDE CHAINS COORDINATES ########
     
     # Strategy: superpose the fixed prePDB with the postPDB fixed (#TODO with CA/backbone of rigid residues only if possible)
@@ -133,5 +131,5 @@ if __name__ == "__main__":
     # and _rfdattnprevrigidschainsfixed.pdb the final version of post RFD+AttnPacker PDB well formatted
     # with prePDB's rigid side chains and predicted flexible side chains
 
-    
 
+    """

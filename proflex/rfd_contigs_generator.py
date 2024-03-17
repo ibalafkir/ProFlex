@@ -5,6 +5,11 @@ Input from commandline: PDB with both proteins interacting and the chains to ana
 Example:
 
 python rfd_contigs_generator.py --pdb B_PD1_diff_8_prep_relax_fixed.pdb --id1 A --id2 B --distance_threshold 200
+
+# TODO This program has to generate a contig of all chains, not just 2 of them
+# TODO id1->ab1 should be an ab/nb chain, id2->ab2 should be another ab chain if existing, and ag should be the antigen
+# TODO can the antigen have more than 1 chain?
+
 """
 
 from proflex.utils import PDBUtils

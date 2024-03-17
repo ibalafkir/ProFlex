@@ -36,7 +36,7 @@ if __name__ == "__main__":
     PDBProcessor.remove_hetatm(pdb_file[:-4]+'_ch_insfixed'+'_terfixed.pdb')
 
     print("Removing unnecessary lines...\n")
-    PDBProcessor.remove_lines(pdb_file[:-4]+'_ch_insfixed'+'_terfixed_nohetatm.pdb', ['CONECT', 'MASTER' 'HEADER', 'TITLE', 'COMPND', 'SOURCE', 'KEYWDS', 'EXPDATA', 'AUTHOR', 'REVDAT', 'JRNL', 'REMARK'])
+    PDBProcessor.remove_lines(pdb_file[:-4]+'_ch_insfixed'+'_terfixed_nohetatm.pdb', ['CRYST1', 'ANISOU', 'CONECT', 'MASTER' 'HEADER', 'TITLE', 'COMPND', 'SOURCE', 'KEYWDS', 'EXPDATA', 'AUTHOR', 'REVDAT', 'JRNL', 'REMARK'])
     # TODO more lines to be removed might be added soon
 
     print("Deleting temporal files...\n")
