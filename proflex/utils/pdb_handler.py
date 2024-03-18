@@ -77,28 +77,14 @@ class PDBProcessor:
             for line in f_input:
                 if not any(line.startswith(element) for element in lst):
                     f_output.write(line)
-                    
     
-    def pdb_keepchain(pdb,keep):
-        pdb_del = pdb[:-4]+'_ch.pdb'
-        
+    def pdb_keepchain(pdb, keep):
+        name = pdb[:-4]+'_ch.pdb'
         atom_df = PDBUtils.get_pdb_atoms_df(pdb)
-        chains_id = PDBUtils.get_chains_id(atom_df)
-        
-        delet = []
-        
-        for i in chains_id:
-            if i not in keep:
-                delet.append(i)
-        
-        f = open(pdb, 'rt')
-        f_del = open(pdb_del, 'wt')
-        lines = f.readlines()
-        for modified_line in pdb_delchain.run(lines, delet):
-            f_del.write(modified_line)    
-
-        f.close()
-        f_del.close()
+        atom_df_ch = atom_df[atom_df['chain_id'].isin(keep)]
+        new_pdb = PandasPdb().read_pdb(pdb)
+        new_pdb.df['ATOM'] = atom_df_ch
+        new_pdb.to_pdb(path=name, records=['ATOM'], gz = False)
     
     def pdb_atomrenumber(pdb, atom_number=1):
         """
@@ -184,7 +170,8 @@ class RFDFixer:
         if len(pdb_rfd_df) == len(pdb_before_rfd_backbone_atom_df):
             print("Number of backbone atoms coincide thus the correction can be done\n")
         else:
-            print("Number of backbone atoms do not coincide, check if any backbone atom is repeated and delete lines manually")
+            print("Number of backbone atoms do not coincide, check if any backbone atom is repeated and delete lines manually") 
+            # As certain choices like b-factors needs to be managed by the user, we cannot guess
             exit(1)
 
         pdb_rfd_df['chain_id'] = pdb_before_rfd_backbone_atom_df['chain_id']
@@ -257,3 +244,25 @@ class RFDFixer:
         f_sorted.close()
     
     
+
+
+"""
+ def pdb_keepchainbad(pdb,keep): 
+    
+        pdb_del = pdb[:-4]+'_ch.pdb'
+        atom_df = PDBUtils.get_pdb_atoms_df(pdb)
+        chains_id = PDBUtils.get_chains_id(atom_df)
+        delet = [] 
+        for i in chains_id:
+            if i not in keep:
+                delet.append(i)  
+        f = open(pdb, 'rt')
+        f_del = open(pdb_del, 'wt')
+        lines = f.readlines()
+        for modified_line in pdb_delchain.run(lines, delet):
+            f_del.write(modified_line)   
+        f.close()
+        f_del.close()
+        return
+
+"""
