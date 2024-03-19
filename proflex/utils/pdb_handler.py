@@ -82,6 +82,7 @@ class PDBProcessor:
         name = pdb[:-4]+'_ch.pdb'
         atom_df = PDBUtils.get_pdb_atoms_df(pdb)
         atom_df_ch = atom_df[atom_df['chain_id'].isin(keep)]
+        atom_df_ch['segment_id']=''
         new_pdb = PandasPdb().read_pdb(pdb)
         new_pdb.df['ATOM'] = atom_df_ch
         new_pdb.to_pdb(path=name, records=['ATOM'], gz = False)
@@ -168,7 +169,7 @@ class RFDFixer:
         pdb_before_rfd_backbone_atom_df = PDBUtils.get_pdb_atoms_df(pdb_before_rfd_backbone_atom)
         
         if len(pdb_rfd_df) == len(pdb_before_rfd_backbone_atom_df):
-            print("Number of backbone atoms coincide thus the correction can be done\n")
+            print("Number of backbone atoms coincide thus the correction can be done")
         else:
             print("Number of backbone atoms do not coincide, check if any backbone atom is repeated and delete lines manually") 
             # As certain choices like b-factors needs to be managed by the user, we cannot guess

@@ -13,26 +13,26 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Fixes PDB features missed in the output of RFDiffusion'
         )
-    parser.add_argument('-prerfd', type=str, help='Path to the PDB file (input of RFD)')
-    parser.add_argument('-postrfd', type=str, help='Path to the output PDB RFDiffusion file')
-    parser.add_argument('-contigs', type=str, help='Contigs string')
+    parser.add_argument('prerfd', type=str, help='Path to the PDB file (input of RFD)')
+    parser.add_argument('postrfd', type=str, help='Path to the output PDB RFDiffusion file')
+    # parser.add_argument('-contigs', type=str, help='Contigs string')
     args = parser.parse_args()
     
     pre = args.prerfd
     post = args.postrfd
-    contigs = args.contigs
+    # contigs = args.contigs
 
     # Fixing the .pdb format in the RFD PDB output thanks to the PDB input in RFD
 
-    print(f"Correcting {pre}...\n")
+    print(f"Correcting {post}...")
     RFDFixer.pdb_backbone(pre) 
     RFDFixer.pdb_atom(pre[:len(pre)-4]+'_backbone.pdb')
     RFDFixer.correct_rfd_pdbs(post, pre[:len(pre)-4]+'_backbone.pdb')
     
-    print("Tidying...\n")
+    print("Tidying...")
     RFDFixer.pdb_tidying(post[:len(post)-4]+'_chainsfixed.pdb')
     
-    print("Deleting temporal files...\n")
+    print("Deleting temporal files...")
     pdb_name = pre[:len(pre)-4]
     pdb_file_backbone = pdb_name+'_backbone.pdb'
     pdb_file_backbone_atom = pdb_file_backbone[:-4]+'_atom.pdb'
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     
     wd = os.getcwd()
     
-    print(f"Output file in {wd} with the name {pdb_rfd_name+'_rfdfixed.pdb'}\n")
+    print(f"Output: {pdb_rfd_name+'_rfdfixed.pdb'}")
     
     
     

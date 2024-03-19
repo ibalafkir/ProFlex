@@ -6,9 +6,13 @@ Example:
 
 python rfd_contigs_generator.py --pdb B_PD1_diff_8_prep_relax_fixed.pdb --id1 A --id2 B --distance_threshold 200
 
-# TODO This program has to generate a contig of all chains, not just 2 of them
+# TODO This program has to generate a contig of all chains, not just 2 of them and chains must be input according to the order of appearence in the pdb file
 # TODO id1->ab1 should be an ab/nb chain, id2->ab2 should be another ab chain if existing, and ag should be the antigen
+# TODO strategy: if 2 input chains do this, if 3 calculate another intchainadditional
+# create another intchainadditional
 # TODO can the antigen have more than 1 chain?
+# TODO completely fixed chains cannot be accepted by RFdiffusion (the partial protocol), then if no regions of =>3 aas are found in a chain we need to force it to 
+# diffuse a residue far from the interphase
 
 """
 
@@ -44,3 +48,5 @@ if __name__ == "__main__":
     intchain1additional = InterfaceAnalyzer.amplify_selection_residues(int1, chain1_relevant)
     intchain2additional = InterfaceAnalyzer.amplify_selection_residues(int2, chain2_relevant)
     print(RFDContigs.get_contigs(chain_1, chain_2, intchain1additional, intchain2additional))
+    print(intchain1additional)
+    print(intchain2additional)
