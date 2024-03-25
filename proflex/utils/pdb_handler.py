@@ -120,13 +120,15 @@ class RFDFixer:
         """
         Deletes atom types indicated in the list apart from
         the conventional ones (N, C, O, H; manageable by pdb_delel)
+        Also some H are not manageable by pdb_delel
         Used when the atom type is not manageable by pdb_delel
         """
-        
+        # EMPIEZAN CHANGES
         pdb_atom_df = PDBUtils.get_pdb_atoms_df(pdb)
+        lst_elh = [term for term in pdb_atom_df['atom_name'] if term.startswith('H')]
+        lst_elh.append('OXT')
         
-        for i in lst_el:
-            pdb_atom_df = pdb_atom_df[pdb_atom_df['atom_name'] != i]
+        pdb_atom_df = pdb_atom_df[~pdb_atom_df['atom_name'].isin(lst_elh)]
         
         pdb_file = PandasPdb().read_pdb(pdb)
         pdb_file.df['ATOM'] = pdb_atom_df
@@ -171,7 +173,7 @@ class RFDFixer:
         if len(pdb_rfd_df) == len(pdb_before_rfd_backbone_atom_df):
             print("Number of backbone atoms coincide thus the correction can be done")
         else:
-            print("Number of backbone atoms do not coincide, check if any backbone atom is repeated and delete lines manually") 
+            print(f"Number of backbone atoms do not coincide ({len(pdb_rfd_df)} vs {len(pdb_before_rfd_backbone_atom_df)}), check if any backbone atom is repeated and delete lines manually") 
             # As certain choices like b-factors needs to be managed by the user, we cannot guess
             exit(1)
 

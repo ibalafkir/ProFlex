@@ -6,6 +6,11 @@ With respect to version 1, this program tries to keep the repacking prediction o
 that's why the contigs codes are needed, and recovering the rigid regions coordinates before diffunding
 the system. As RFd does a brief translation, a superposition to the non-diffunded system (input in RFd,
 aka prePDB in other logging statements)
+
+PDB INPUT MUST BE IN A SINGLE CHAIN ID, OTHERWISE ATTNPACKER CAN'T REPACK ALL CHAINS AND ONLY REPACKS THE FIRST AND THUS THIS DOES NOT WORK!
+
+$ pdb_gap -A <pdb>
+
 """
 
 from proflex.utils import RFDFixer, PDBUtils, PDBProcessor
@@ -19,14 +24,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(
         description='Fixes PDB features missed in the output of RFDiffusion'
         )
-    parser.add_argument('-prerfd', type=str, help='Path to the PDB file (input of RFD)')
-    parser.add_argument('-postrfd', type=str, help='Path to the output PDB RFDiffusion+ATTNPacker file')
-    parser.add_argument('-contigs', type=str, help='Contigs string')
+    parser.add_argument('prerfd', type=str, help='Path to the PDB file (input of RFD)')
+    parser.add_argument('postrfd', type=str, help='Path to the output PDB RFDiffusion+ATTNPacker file')
+    #parser.add_argument('-contigs', type=str, help='Contigs string')
     args = parser.parse_args()
     
     pre = args.prerfd
     post = args.postrfd
-    contigs = args.contigs
+    #contigs = args.contigs
 
                                 ####### REFORMATTING RFD-ATTNPACKER OUTPUT ########
     
@@ -35,15 +40,17 @@ if __name__ == "__main__":
     # without hydrogens and OXT atom names, and then make the chain, residue number
     # and atom number correction
     
+    print(f"Correcting {post}")
     
+    print("Editing reference")
     RFDFixer.pdb_delel(pre, ['H'], pre[:-4]+'_noh.pdb')
     RFDFixer.pdb_atom(pre[:len(pre)-4]+'_noh.pdb')
-    
     # AttnPacker does not add 'OXT' atom types, they need to be removed in our pdb format correction strategy
     RFDFixer.pdb_delotherel(pre[:-4]+'_noh_atom.pdb', ['OXT'], pre[:-4]+'_noh_atom_noOXT.pdb')
-
+    
     RFDFixer.pdb_atom(post)
     RFDFixer.correct_rfd_pdbs(post[:-4]+'_atom.pdb', pre[:-4]+'_noh_atom_noOXT.pdb')
+    print("Tidying...")
     RFDFixer.pdb_tidying(post[:-4]+'_atom_chainsfixed.pdb')
     PDBProcessor.pdb_atomrenumber(post[:-4]+'_atom_chainsfixed_tidied.pdb', 1) # TODO TER line is counted as an atom
     

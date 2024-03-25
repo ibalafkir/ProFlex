@@ -5,6 +5,13 @@
 # if existing, this information is always kept when PDBs are downloaded from
 # https://files.rcsb.org/download/XXXX.pdb' where XXXX stands for the 4-letter PDB code
 
+# The pipeline needs a PDB w/o gaps (blame RFdiffusion)
+# When generating an ub structure, use this script in ab and ag per sepparate and then superpose with 
+# the bound structure and minimize in the ppw GUI
+# After this, use PDBProcessor
+
+
+
 if [ "$#" -ne 2 ]; then
     echo "Usage: $0 <SCH_PPW_PATH> <INPUT_PDB_PATH>"
     echo "Please provide the following arguments in the correct order:"
