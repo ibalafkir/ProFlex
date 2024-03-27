@@ -24,6 +24,11 @@ SCH_PPW_PATH="$1" # Path to Schrodinger Protein Preparation Wizard
 INPUT_PDB_PATH="$2" # Path to input PDB file
 OUTPUT_PDB_PATH="${INPUT_PDB_PATH%.*}_fill.pdb" # Output path for processed PDB file
 
-"$SCH_PPW_PATH" -fillloops "$INPUT_PDB_PATH" "$OUTPUT_PDB_PATH"
+"$SCH_PPW_PATH" -fillloops -nohtreat -noepik "$INPUT_PDB_PATH" "$OUTPUT_PDB_PATH"
 
 echo "Job sent to $SCH_PPW_PATH, .log and output files expected in $PWD"
+
+#for pdb_file in *.pdb; do
+#output_file="${pdb_file%.pdb}_fill.pdb"
+#"$SCHRODINGER/utilities/prepwizard" -fillloops -nohtreat -noepik "$pdb_file" "$output_file"
+# done
