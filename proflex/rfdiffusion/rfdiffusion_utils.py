@@ -47,102 +47,80 @@ class RFDContigs:
                 result.append(i)
         return result
 
-    def get_contigs(chain_1, chain_2, intchain1additional, intchain2additional):
-        """
-        #TODO Continuously revise possible mistakes in the code generation when diffusing first
-        and last residues
-        """
-        id1 = PDBUtils.get_chains_id(chain_1)[0]
-        id2 = PDBUtils.get_chains_id(chain_2)[0]
-        chain1_start = RFDContigs.get_resnum_list(chain_1)[0]
-        chain1_end = RFDContigs.get_resnum_list(chain_1)[len(chain_1)-1]
-        chain2_start = RFDContigs.get_resnum_list(chain_2)[0]
-        chain2_end = RFDContigs.get_resnum_list(chain_2)[len(chain_2)-1]
-        intera1_resnum = RFDContigs.get_resnum_list(intchain1additional)
-        intera2_resnum = RFDContigs.get_resnum_list(intchain2additional)
-        intera1_lst = RFDContigs.get_chunks(intera1_resnum)
-        intera2_lst = RFDContigs.get_chunks(intera2_resnum)
-        intera1_lst = RFDContigs.chunk_filter(intera1_lst)
-        intera2_lst = RFDContigs.chunk_filter(intera2_lst)
-
-        # First chain
-
-        if chain1_start in intera1_resnum and chain1_end in intera1_resnum:
-            contig = f"{chain1_end-chain1_start+1}-{chain1_end-chain1_start+1}"
+    def get_contigs(chain, intchainadditional):
         
-        elif chain1_start in intera1_resnum and chain1_end not in intera1_resnum:
+        id = PDBUtils.get_chains_id(chain)[0]
+        chain_start = RFDContigs.get_resnum_list(chain)[0]
+        chain_end = RFDContigs.get_resnum_list(chain)[-1]
+        chain_allresnum = RFDContigs.get_resnum_list(chain)
+        intera_resnum =  RFDContigs.get_resnum_list(intchainadditional)
+        intera_lst = RFDContigs.get_chunks(intera_resnum)
+        intera_lst = RFDContigs.chunk_filter(intera_lst) 
+        intera_lst_extended = []
+        for sublst in intera_lst:
+            intera_lst_extended.extend(sublst)
+        
+        print(f"Chain {id} starts in {chain_start} and ends in {chain_end}")
+        print(f"Length of {len(chain_allresnum)}")
+        print(f"Chunks of chain {id} to diffuse")
+        print(intera_lst)
+        #print(f"Extended chunks of chain {id}")
+        #print(intera_lst_extended)
+        
+        if intera_lst:
             
-            # Checks if only the last residue is considered rigid
-            c = 0
-            if len(intera1_resnum) == chain1_end-chain1_start: # only chain1_end residue is excluded
-                c += 1
-                contig = f"{chain1_end-chain1_start+1}-{chain1_end-chain1_start+1}/{id1}{chain1_end}"
+            if len(intera_lst_extended) == len(chain_allresnum):
+                contig = f"{len(chain_allresnum)}-{len(chain_allresnum)}/"
+        
+            elif chain_start in intera_lst[0]:
+                contig=f"{len(intera_lst[0])}-{len(intera_lst[0])}/{id}{intera_lst[0][-1]+1}-"
+                for curr_list in intera_lst[1:]:
+                    curr_list_start = curr_list[0]
+                    curr_list_end = curr_list[-1]
+                    contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
+                    contig += f"{id}{curr_list_end+1}-"
                 
-            if c == 0:
-                contig = f"{intera1_lst[0][-1]-intera1_lst[0][0]+1}-{intera1_lst[0][-1]-intera1_lst[0][0]+1}/{id1}"
-                contig = contig + f"{intera1_lst[0][-1]+1}-"
-                intera1_lst = intera1_lst[1:]
-                for curr_list in intera1_lst:
-                    list_start = curr_list[0]
-                    list_end = curr_list[len(curr_list)-1]
-                    contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id1}{list_end+1}-"
-                contig = contig[:len(contig)-1] + f"-{chain1_end}"
-        
-        elif chain1_start not in intera1_lst and chain1_start+1 in intera1_resnum:
-            
-            contig = f"{id1}"
-            for curr_list in intera1_lst:
-                list_start = curr_list[0]
-                list_end = curr_list[len(curr_list)-1]
-                contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id1}{list_end+1}-"
-            contig = contig[:len(contig)-1] + f"-{chain1_end}"
-        
-        else: 
-            contig = f"{id1}{chain1_start}-"
-            for curr_list in intera1_lst:
-                list_start = curr_list[0]
-                list_end = curr_list[len(curr_list)-1]
-                contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id1}{list_end+1}-"
-            contig = contig[:len(contig)-1] + f"-{chain1_end}"
-        
-        ## Change of chain ######
-        
-        contig += "/0 "
-        
-        #########################
-        
-        # Second chain
-        
-        if chain2_start in intera2_resnum and chain2_end in intera2_resnum:
-            contig += f"{chain2_end-chain2_start+1}-{chain2_end-chain2_start+1}"
+                if chain_end-1 in intera_lst_extended and chain_end not in intera_lst_extended:
+                    contig = contig[:-1]+"/"
+                elif chain_end in intera_lst_extended:
+                    contig = contig[:(-(1+1+len(str(intera_lst[-1][-1]))))]
+                    if contig[-1] == "/":
+                        pass
+                    else:
+                        contig += "/"
+                
+                else:
+                    contig += f"{chain_end}"+"/"
+                    
+            elif chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
+                contig =f"{id}"
+                for curr_list in intera_lst:
+                    curr_list_start = curr_list[0]
+                    curr_list_end = curr_list[-1]
+                    contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
+                    contig += f"{id}{curr_list_end+1}-"
+                
+                if chain_end-1 in intera_lst_extended and chain_end not in intera_lst_extended:
+                    contig = contig[:-1]+"/"
+                    
+                elif chain_end in intera_lst_extended:
+                    contig = contig[:(-(1+1+len(str(intera_lst[-1][-1]))))]+"/"
 
-        elif chain2_start in intera2_resnum and chain2_end not in intera2_resnum:
-            c = 0
-            if len(intera2_resnum) == chain2_end-chain2_start: # only chain1_end residue is excluded
-                c += 1
-                contig += f"{chain2_end-chain2_start+1}-{chain2_end-chain2_start+1}"
-                    
-            if c == 0:
-                contig += f"{intera2_lst[0][-1]-intera2_lst[0][0]+1}-{intera2_lst[0][-1]-intera2_lst[0][0]+1}/{id2}"
-                contig = contig + f"{intera2_lst[0][-1]+1}-"
-                intera2_lst = intera2_lst[1:]
-                for curr_list in intera2_lst:
-                    list_start = curr_list[0]
-                    list_end = curr_list[len(curr_list)-1]
-                    contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id2}{list_end+1}-"
-                contig = contig[:len(contig)-1] + f"-{chain1_end}"
-                    
+                else:
+                    contig += f"{chain_end}"+"/"
+
+            else:
+                contig = f"{id}{chain_start}-"
+                for curr_list in intera_lst:
+                    curr_list_start = curr_list[0]
+                    curr_list_end = curr_list[-1]
+                    contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
+                    contig += f"{id}{curr_list_end+1}-"
+                contig += f"{chain_end}"+"/"
         else:
-            contig += f"{id2}{chain2_start}-"
-            for curr_list in intera2_lst:
-                list_start = curr_list[0]
-                list_end = curr_list[len(curr_list)-1]
-                contig += f"{list_start-1}/{list_end-list_start+1}-{list_end-list_start+1}/{id2}{list_end+1}-"
-            contig += f"{chain2_end}"
-        
-        contig = '['+contig+']'    
-        return contig
+            contig = f"{id}{chain_start}-{chain_end}"+"/"
 
+        return contig
 class RFDSchains:
     
     def get_contig_chid(contiglist):
