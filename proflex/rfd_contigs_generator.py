@@ -4,10 +4,7 @@ Input from commandline: PDB with both proteins interacting and the chains to ana
 
 Example:
 
-# TODO in if ab2 is not None, function to mix codes of antigen
-# TODO asegurarme de los cambios en id1 y pasarlos a B (en rfd_utils)
-# TODO completely fixed chains cannot be accepted by RFdiffusion (the partial protocol), then if no regions of =>3 aas are found in a chain we need to force it to 
-# diffuse a residue far from the interphase
+# TODO Check whether completely fixed chains are accepted by RFdiffusion
 
 """
 
