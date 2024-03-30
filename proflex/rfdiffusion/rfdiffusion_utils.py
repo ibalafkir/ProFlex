@@ -47,7 +47,13 @@ class RFDContigs:
                 result.append(i)
         return result
 
-    def get_contigs(chain, intchainadditional):
+    def get_contigs(chain, intchainadditional, include_extremes=True):
+        """
+        Generates contigs code
+        Inputs. PDB df of a SINGLE chain and PDB df with selected as interactive residues with the other chain
+        Tip: the last df should be amplified so that the diffused regions altogether are not too segmented (that's why the parameter is 'additional')
+        
+        """
         
         id = PDBUtils.get_chains_id(chain)[0]
         chain_start = RFDContigs.get_resnum_list(chain)[0]
@@ -55,7 +61,17 @@ class RFDContigs:
         chain_allresnum = RFDContigs.get_resnum_list(chain)
         intera_resnum =  RFDContigs.get_resnum_list(intchainadditional)
         intera_lst = RFDContigs.get_chunks(intera_resnum)
-        intera_lst = RFDContigs.chunk_filter(intera_lst) 
+        intera_lst = RFDContigs.chunk_filter(intera_lst)
+        
+        if include_extremes == True:
+            if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
+                print("The first residue was defined as rigid comes before a flexible zone: it will be included (otherwise RFDiffusion will not work)")
+                intera_lst[0].insert(0, chain_start)
+            
+            if chain_end not in intera_lst[-1] and chain_end-1 in intera_lst[-1]:
+                print("The first residue was defined as rigid comes before a flexible zone: it will be included (otherwise RFDiffusion will not work)")
+                intera_lst[-1].append(chain_end)
+        
         intera_lst_extended = []
         for sublst in intera_lst:
             intera_lst_extended.extend(sublst)
@@ -66,6 +82,17 @@ class RFDContigs:
         print(intera_lst)
         #print(f"Extended chunks of chain {id}")
         #print(intera_lst_extended)
+        """
+        ### RFDiffusion can't fix the first residue of a chain if there is a flexible zone after, then we'll include them (same with last res and the one before the last)
+        if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
+            intera_lst[0].insert(0, chain_start)
+        if chain_end-1 in intera_lst_extended and chain_end not in intera_lst_extended:
+            intera_lst[-1].append(chain_end)
+        
+        print(f"Chunks of chain {id} to diffuse")
+        print(intera_lst)
+        
+        """
         
         if intera_lst:
             
@@ -103,7 +130,7 @@ class RFDContigs:
                 if chain_end-1 in intera_lst_extended and chain_end not in intera_lst_extended:
                     contig = contig[:-1]+"/"
                     
-                elif chain_end in intera_lst_extended:
+                if chain_end in intera_lst_extended:
                     contig = contig[:(-(1+1+len(str(intera_lst[-1][-1]))))]+"/"
 
                 else:
