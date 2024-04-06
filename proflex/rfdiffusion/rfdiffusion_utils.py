@@ -17,6 +17,9 @@ class RFDContigs:
     def get_chunks(lst):
         """
         Makes a list of lists with chunks of followed residues
+        BUG when it gets two same followed numbers eg [..., 220, 220,...] bc it starts a new chunk, example in 5HGG_b,
+        this happens when the first 220 corresponds to a conformatin (eg A) and the second to another (eg B)
+        No problem if the list it gets has no repeated res numbers
         """
         result = []
         subgroup = []
@@ -62,15 +65,17 @@ class RFDContigs:
         intera_resnum =  RFDContigs.get_resnum_list(intchainadditional)
         intera_lst = RFDContigs.get_chunks(intera_resnum)
         intera_lst = RFDContigs.chunk_filter(intera_lst)
-        
+
         if include_extremes == True:
-            if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
-                print("The first residue was defined as rigid comes before a flexible zone: it will be included (otherwise RFDiffusion will not work)")
-                intera_lst[0].insert(0, chain_start)
-            
-            if chain_end not in intera_lst[-1] and chain_end-1 in intera_lst[-1]:
-                print("The first residue was defined as rigid comes before a flexible zone: it will be included (otherwise RFDiffusion will not work)")
-                intera_lst[-1].append(chain_end)
+            print("Isolated rigid residues in extremes will be diffussed")
+            if intera_lst:
+                if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
+                    print("The first residue was defined as rigid and comes before a flexible zone: it will be included (otherwise RFDiffusion will not work)")
+                    intera_lst[0].insert(0, chain_start)
+                
+                if chain_end not in intera_lst[-1] and chain_end-1 in intera_lst[-1]:
+                    print("The last residue was defined as rigid comes after a flexible zone: it will be included (otherwise RFDiffusion will not work)")
+                    intera_lst[-1].append(chain_end)
         
         intera_lst_extended = []
         for sublst in intera_lst:
@@ -78,8 +83,8 @@ class RFDContigs:
         
         print(f"Chain {id} starts in {chain_start} and ends in {chain_end}")
         print(f"Length of {len(chain_allresnum)}")
-        print(f"Chunks of chain {id} to diffuse")
-        print(intera_lst)
+        #print(f"Chunks of chain {id} to diffuse")
+        #print(intera_lst)
         #print(f"Extended chunks of chain {id}")
         #print(intera_lst_extended)
         """
