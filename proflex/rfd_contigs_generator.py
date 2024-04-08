@@ -32,7 +32,7 @@ if __name__ == "__main__":
     # Nanobody - antigen interaction
     if ab2 is None:
         
-        print(f"Nanobody - antigen system detected")
+        #print(f"Nanobody - antigen system detected")
         #print(f"Antibody chain: {ab1}")
         #print(f"Antigen chain: {ag}")
 
@@ -41,7 +41,7 @@ if __name__ == "__main__":
         atom_df_ca = PDBUtils.get_ca(atom_df)
         chains_id_ordered = PDBUtils.get_chains_id(atom_df_ca)
         
-        print(f"Order of chain appearence in {pdb_file}: first is {chains_id_ordered[0]}, second is {chains_id_ordered[1]}")
+        # print(f"Order of chain appearence in {pdb_file}: first is {chains_id_ordered[0]}, second is {chains_id_ordered[1]}")
         
 
         input_ch = [ab1, ag]
@@ -53,7 +53,7 @@ if __name__ == "__main__":
             id1 = ag
             id2 = ab1
         
-        print(f"In the contig output, the first id will be {id1} and the second {id2}, this MUST coincide with PDB order")
+        #print(f"In the contig output, the first id will be {id1} and the second {id2}, this MUST coincide with PDB order")
 
         chain_1 = PDBUtils.get_chain(atom_df_ca, id1)
         chain_2 = PDBUtils.get_chain(atom_df_ca, id2)
@@ -72,7 +72,7 @@ if __name__ == "__main__":
     # Antibody (2 chains) - antigen interaction
     if ab2 is not None:
         
-        print(f"Antibody - antigen system detected")
+        #print(f"Antibody - antigen system detected")
         #print(f"Antibody first input chain: {ab1}")
         #print(f"Antibody second input chain: {ab2}")
         #print(f"Antigen chain: {ag}")
@@ -87,10 +87,10 @@ if __name__ == "__main__":
         chains_id_ordered = PDBUtils.get_chains_id(atom_df_ca)
         
 
-        print(f"Order of chain appearence in {pdb_file}:"
-            f" first is {chains_id_ordered[0]}"
-            f", second is {chains_id_ordered[1]}"
-            f", third is {chains_id_ordered[2]}")
+        #print(f"Order of chain appearence in {pdb_file}:"
+        #    f" first is {chains_id_ordered[0]}"
+        #    f", second is {chains_id_ordered[1]}"
+        #    f", third is {chains_id_ordered[2]}")
         
         chain_1 = PDBUtils.get_chain(atom_df_ca, id1)
         chain_2 = PDBUtils.get_chain(atom_df_ca, id2)
@@ -144,13 +144,13 @@ if __name__ == "__main__":
         contigs = f"[{first}0 {second}0 {third[:-1]}]"
         
         print(contigs)
-        print(f"In principle, the contigs of {ag} should be correct, as a test run the same program twice for each ab chain")
+        #print(f"In principle, the contigs of {ag} should be correct, as a test run the same program twice for each ab chain")
         
-        print("Int 3 con una interfaz")
-        print(int3_1['residue_number'].tolist())
-        print("Int 3 con una interfaz")
-        print(int3_2['residue_number'].tolist())
-        print("Int 3 mezclado interfaz y ordenado")
-        print(int3_mixed['residue_number'].tolist())
-        print("Int 3 con vecinos")
-        print(intchain3additional['residue_number'].tolist())
+        #print("Int 3 con una interfaz")
+        #print(int3_1['residue_number'].tolist())
+        #print("Int 3 con una interfaz")
+        #print(int3_2['residue_number'].tolist())
+        #print("Int 3 mezclado interfaz y ordenado")
+        #print(int3_mixed['residue_number'].tolist())
+        #print("Int 3 con vecinos")
+        #print(intchain3additional['residue_number'].tolist())

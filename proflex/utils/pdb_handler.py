@@ -7,7 +7,7 @@ from pdbtools import pdb_fixinsert
 import os
 import pandas as pd
 from biopandas.pdb import PandasPdb
-from pdbtools import pdb_tidy, pdb_selatom, pdb_sort, pdb_reatom, pdb_delchain, pdb_delelem
+from pdbtools import pdb_tidy, pdb_selatom, pdb_sort, pdb_reatom, pdb_delchain, pdb_delelem, pdb_reres
 from proflex.utils import PDBUtils
 import mdtraj as md
 
@@ -99,6 +99,16 @@ class PDBProcessor:
             f_atomsorted.write(modified_line)
         f.close()
         f_atomsorted.close()
+    
+    def pdb_resnum(pdb, n):
+        
+        f = open(pdb, 'rt')
+        f_resnum = open(pdb[:-4]+'_renum.pdb', 'wt')
+        lines = f.readlines()        
+        for modified_line in pdb_reres.run(lines, n):
+            f_resnum.write(modified_line)
+        f.close()
+        f_resnum.close()
 
 
 class RFDFixer:

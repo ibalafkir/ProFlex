@@ -67,22 +67,22 @@ class RFDContigs:
         intera_lst = RFDContigs.chunk_filter(intera_lst)
 
         if include_extremes == True:
-            print("Isolated rigid residues in extremes will be diffussed")
+            #print("Isolated rigid residues in extremes will be diffussed")
             if intera_lst:
                 if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
-                    print("The first residue was defined as rigid and comes before a flexible zone: it will be included (otherwise RFDiffusion will not work)")
+                    #print("The first residue was defined as rigid and comes before a flexible zone: it will be included (otherwise RFDiffusion will not work)")
                     intera_lst[0].insert(0, chain_start)
                 
                 if chain_end not in intera_lst[-1] and chain_end-1 in intera_lst[-1]:
-                    print("The last residue was defined as rigid comes after a flexible zone: it will be included (otherwise RFDiffusion will not work)")
+                    #print("The last residue was defined as rigid and comes after a flexible zone: it will be included (otherwise RFDiffusion will not work)")
                     intera_lst[-1].append(chain_end)
         
         intera_lst_extended = []
         for sublst in intera_lst:
             intera_lst_extended.extend(sublst)
         
-        print(f"Chain {id} starts in {chain_start} and ends in {chain_end}")
-        print(f"Length of {len(chain_allresnum)}")
+        #print(f"Chain {id} starts in {chain_start} and ends in {chain_end}")
+        #print(f"Length of {len(chain_allresnum)}")
         #print(f"Chunks of chain {id} to diffuse")
         #print(intera_lst)
         #print(f"Extended chunks of chain {id}")
@@ -137,6 +137,7 @@ class RFDContigs:
                     
                 if chain_end in intera_lst_extended:
                     contig = contig[:(-(1+1+len(str(intera_lst[-1][-1]))))]+"/"
+                    
 
                 else:
                     contig += f"{chain_end}"+"/"
@@ -149,6 +150,7 @@ class RFDContigs:
                     contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
                     contig += f"{id}{curr_list_end+1}-"
                 contig += f"{chain_end}"+"/"
+                
         else:
             contig = f"{id}{chain_start}-{chain_end}"+"/"
 
