@@ -32,7 +32,7 @@ class RFDContigs:
         if subgroup:
             result.append(subgroup)
         
-        # Deletes isolate residue numbers like 5 in [1,2,3], [5], [8, 9, 10] 
+        # Deletes isolate residue numbers like 5 in [1,2,3], [5], [8, 9, 10] / THIS FITS BETTER IN chunk_filter (it works here though)
         
         for i in result: 
             if len(i)==1: 
@@ -58,6 +58,7 @@ class RFDContigs:
         
         """
         
+        # Loading data and defining variables
         id = PDBUtils.get_chains_id(chain)[0]
         chain_start = RFDContigs.get_resnum_list(chain)[0]
         chain_end = RFDContigs.get_resnum_list(chain)[-1]
@@ -66,82 +67,61 @@ class RFDContigs:
         intera_lst = RFDContigs.get_chunks(intera_resnum)
         intera_lst = RFDContigs.chunk_filter(intera_lst)
 
+        # RFdiffusion cannot deal with rigid extremes in a chain if they are just next to a flexible zone
+        # this nuance is written here because it has to do with how the program works, but it might be
+        # more logical to transfer and adapt it to amplify in interface_analyzer
         if include_extremes == True:
-            #print("Isolated rigid residues in extremes will be diffussed")
             if intera_lst:
                 if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
-                    #print("The first residue was defined as rigid and comes before a flexible zone: it will be included (otherwise RFDiffusion will not work)")
                     intera_lst[0].insert(0, chain_start)
-                
                 if chain_end not in intera_lst[-1] and chain_end-1 in intera_lst[-1]:
-                    #print("The last residue was defined as rigid and comes after a flexible zone: it will be included (otherwise RFDiffusion will not work)")
                     intera_lst[-1].append(chain_end)
         
+        # Flattens the list
         intera_lst_extended = []
         for sublst in intera_lst:
             intera_lst_extended.extend(sublst)
         
-        #print(f"Chain {id} starts in {chain_start} and ends in {chain_end}")
-        #print(f"Length of {len(chain_allresnum)}")
-        #print(f"Chunks of chain {id} to diffuse")
-        #print(intera_lst)
-        #print(f"Extended chunks of chain {id}")
-        #print(intera_lst_extended)
-        """
-        ### RFDiffusion can't fix the first residue of a chain if there is a flexible zone after, then we'll include them (same with last res and the one before the last)
-        if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
-            intera_lst[0].insert(0, chain_start)
-        if chain_end-1 in intera_lst_extended and chain_end not in intera_lst_extended:
-            intera_lst[-1].append(chain_end)
-        
-        print(f"Chunks of chain {id} to diffuse")
-        print(intera_lst)
-        
-        """
-        
+        # Generates contigs
         if intera_lst:
-            
+            print(intera_lst)       
             if len(intera_lst_extended) == len(chain_allresnum):
                 contig = f"{len(chain_allresnum)}-{len(chain_allresnum)}/"
-        
-            elif chain_start in intera_lst[0]:
-                contig=f"{len(intera_lst[0])}-{len(intera_lst[0])}/{id}{intera_lst[0][-1]+1}-"
+                
+            elif chain_start in intera_lst[0] and chain_end not in intera_lst[-1]:
+                contig = f"{len(intera_lst[0])}-{len(intera_lst[0])}/"
+                contig += f"{id}{intera_lst[0][-1]+1}-"
                 for curr_list in intera_lst[1:]:
                     curr_list_start = curr_list[0]
                     curr_list_end = curr_list[-1]
                     contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
                     contig += f"{id}{curr_list_end+1}-"
+                contig += f"{chain_end}"+"/"
                 
-                if chain_end-1 in intera_lst_extended and chain_end not in intera_lst_extended:
-                    contig = contig[:-1]+"/"
-                elif chain_end in intera_lst_extended:
-                    contig = contig[:(-(1+1+len(str(intera_lst[-1][-1]))))]
-                    if contig[-1] == "/":
+            elif chain_start in intera_lst[0] and chain_end in intera_lst[-1]:
+                contig = f"{len(intera_lst[0])}-{len(intera_lst[0])}/"
+                contig += f"{id}{intera_lst[0][-1]+1}-"
+                for curr_list in intera_lst[1:]:
+                    curr_list_start = curr_list[0]
+                    curr_list_end = curr_list[-1]
+                    contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
+                    if curr_list == intera_lst[-1]:
                         pass
                     else:
-                        contig += "/"
-                
-                else:
-                    contig += f"{chain_end}"+"/"
-                    
-            elif chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
-                contig =f"{id}"
+                        contig += f"{id}{curr_list_end+1}-"
+            
+            elif chain_start not in intera_lst[0] and chain_end in intera_lst[-1]:
+                contig = f"{id}{chain_start}-"
                 for curr_list in intera_lst:
                     curr_list_start = curr_list[0]
                     curr_list_end = curr_list[-1]
                     contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
-                    contig += f"{id}{curr_list_end+1}-"
+                    if curr_list == intera_lst[-1]:
+                        pass
+                    else:
+                        contig += f"{id}{curr_list_end+1}-"
                 
-                if chain_end-1 in intera_lst_extended and chain_end not in intera_lst_extended:
-                    contig = contig[:-1]+"/"
-                    
-                if chain_end in intera_lst_extended:
-                    contig = contig[:(-(1+1+len(str(intera_lst[-1][-1]))))]+"/"
-                    
-
-                else:
-                    contig += f"{chain_end}"+"/"
-
+            
             else:
                 contig = f"{id}{chain_start}-"
                 for curr_list in intera_lst:
@@ -150,7 +130,8 @@ class RFDContigs:
                     contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
                     contig += f"{id}{curr_list_end+1}-"
                 contig += f"{chain_end}"+"/"
-                
+
+
         else:
             contig = f"{id}{chain_start}-{chain_end}"+"/"
 
