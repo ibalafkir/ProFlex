@@ -2,6 +2,9 @@ import numpy as np
 import pandas as pd
 
 class InterfaceAnalyzer:
+    """
+    Functions to extract interface residues from PDB files
+    """
 
     def get_interface_residues_by_chain(chain1: str, chain2: str, distance_threshold=6):
         """

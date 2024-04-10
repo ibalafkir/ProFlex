@@ -1,6 +1,5 @@
 """"
-Preprocesses a PDB file before entering the pipeline, mainly by removing
-insertion codes that antibodies usually have
+Preprocesses a PDB file before entering the pipeline
 """
 
 from pdbtools import pdb_fixinsert
@@ -13,13 +12,14 @@ import mdtraj as md
 
 
 class PDBProcessor:
+    """
+    General PDB processing functions that generate new PDBs by applying these functions
+    """
         
     def fix_insertions(pdb):
         """
         Does a renumbering deleting antibody insertion codes using pdb-tools
         TER lines tend to encounter errors (easily solved afterwards)
-        :param Path to PDB
-        :return Solved PDB file for insertion codes
         """
         f = open(pdb, "rt")
         f_fixed = open(pdb[:-4]+'_insfixed.pdb', "wt")
@@ -34,8 +34,6 @@ class PDBProcessor:
     def fix_ter_mistakes(pdb):
         """
         Solves TER lines mistakes from the pdb-tools pdb_fixinsert tool
-        :param Path to processed PDB
-        :return Solved PDB file for TER lines
         """
         with open(pdb, "r") as f_input, open(pdb[:-4]+'_terfixed.pdb', "w") as f_output:
             for line in f_input:
@@ -53,12 +51,10 @@ class PDBProcessor:
                     
                 else:
                     f_output.write(line)
-      
+
     def remove_hetatm(pdb):
         """
         Removes HETATM lines and their ANISOU lines (for now, other removals might be added here)
-        :param Path to PDB
-        :return PDB with previous lines removed
         """
         with open(pdb, 'r') as f_input, open(pdb[:-4]+'_nohetatm.pdb', "w") as f_output:
             c = 0 # Counter
@@ -73,12 +69,18 @@ class PDBProcessor:
                 f_output.write(line)
     
     def remove_lines(pdb, lst):
+        """
+        Removes all lines starting by all the elements indicated in the list (e.g. ['ATOM', 'HETATM']) in the output PDB
+        """
         with open(pdb, 'r') as f_input, open(pdb[:-4]+'_removed.pdb', "w") as f_output:
             for line in f_input:
                 if not any(line.startswith(element) for element in lst):
                     f_output.write(line)
     
     def pdb_keepchain(pdb, keep):
+        """
+        Keeps the desired chain names in the output PDB
+        """
         name = pdb[:-4]+'_ch.pdb'
         atom_df = PDBUtils.get_pdb_atoms_df(pdb)
         atom_df_ch = atom_df[atom_df['chain_id'].isin(keep)]
@@ -89,7 +91,7 @@ class PDBProcessor:
     
     def pdb_atomrenumber(pdb, atom_number=1):
         """
-        Renumbers a PDB starting from the desired atom_number
+        Renumbers a PDB starting from the desired atom number
         """
         pdb_atomsorted = pdb[:len(pdb)-4]+'_atomsorted.pdb'
         f = open(pdb, 'rt')
@@ -101,7 +103,9 @@ class PDBProcessor:
         f_atomsorted.close()
     
     def pdb_resnum(pdb, n):
-        
+        """
+        Renumbers a PDB starting from the desired residue number
+        """
         f = open(pdb, 'rt')
         f_resnum = open(pdb[:-4]+'_renum.pdb', 'wt')
         lines = f.readlines()        
@@ -112,6 +116,10 @@ class PDBProcessor:
 
 
 class RFDFixer:
+    """
+    Fixes the format of a PDB file generated from RFdiffusion (all res in a 
+    single chain)
+    """
     
     def pdb_delel(pdb, lst_el, output_name):
         """
@@ -133,13 +141,10 @@ class RFDFixer:
         Also some H are not manageable by pdb_delel
         Used when the atom type is not manageable by pdb_delel
         """
-        # EMPIEZAN CHANGES
         pdb_atom_df = PDBUtils.get_pdb_atoms_df(pdb)
         lst_elh = [term for term in pdb_atom_df['atom_name'] if term.startswith('H')]
         lst_elh.append('OXT')
-        
         pdb_atom_df = pdb_atom_df[~pdb_atom_df['atom_name'].isin(lst_elh)]
-        
         pdb_file = PandasPdb().read_pdb(pdb)
         pdb_file.df['ATOM'] = pdb_atom_df
         pdb_file.to_pdb(path= output_name, records = ['ATOM'], gz=False) 
@@ -173,9 +178,8 @@ class RFDFixer:
     def correct_rfd_pdbs(pdb_rfd, pdb_before_rfd_backbone_atom):
         """
         Assigns chain ID and residues ID (using the input PDB in RFD) 
-        to the output of RFD
+        to the output of RFdiffusion
         Both must have the same atom lines
-        
         """
         pdb_rfd_df = PDBUtils.get_pdb_atoms_df(pdb_rfd)
         pdb_before_rfd_backbone_atom_df = PDBUtils.get_pdb_atoms_df(pdb_before_rfd_backbone_atom)
@@ -189,7 +193,6 @@ class RFDFixer:
 
         pdb_rfd_df['chain_id'] = pdb_before_rfd_backbone_atom_df['chain_id']
         pdb_rfd_df['residue_number'] = pdb_before_rfd_backbone_atom_df['residue_number']
-        
         pdb_rfd_fixed_name = pdb_rfd[:len(pdb_rfd)-4]+ "_chainsfixed.pdb"
         pdb_rfd_chainsfixed = PandasPdb().read_pdb(pdb_rfd)
         pdb_rfd_chainsfixed.df['ATOM'] = pdb_rfd_df
@@ -245,7 +248,8 @@ class RFDFixer:
             aligned_traj.save(output)
     
     def pdb_sorting(pdb):
-        """ Sorts a PDB according to chain ID and residue number
+        """ 
+        Sorts a PDB according to chain ID and residue number
         """
         pdb_sorted = pdb[:len(pdb)-4]+'_sorted.pdb'
         f = open(pdb, 'rt')
@@ -255,27 +259,3 @@ class RFDFixer:
             f_sorted.write(modified_line)
         f.close()
         f_sorted.close()
-    
-    
-
-
-"""
- def pdb_keepchainbad(pdb,keep): 
-    
-        pdb_del = pdb[:-4]+'_ch.pdb'
-        atom_df = PDBUtils.get_pdb_atoms_df(pdb)
-        chains_id = PDBUtils.get_chains_id(atom_df)
-        delet = [] 
-        for i in chains_id:
-            if i not in keep:
-                delet.append(i)  
-        f = open(pdb, 'rt')
-        f_del = open(pdb_del, 'wt')
-        lines = f.readlines()
-        for modified_line in pdb_delchain.run(lines, delet):
-            f_del.write(modified_line)   
-        f.close()
-        f_del.close()
-        return
-
-"""

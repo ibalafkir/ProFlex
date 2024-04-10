@@ -3,6 +3,9 @@ import pandas as pd
 import copy
 
 class PDBUtils:
+    """
+    Functions to manipulate PDB files in pandas dataframe format
+    """
     @staticmethod
     def get_pdb_atoms_df(pdb_file):
         """

@@ -15,7 +15,7 @@ import pandas as pd
 
 if __name__ == "__main__":
     
-    parser = argparse.ArgumentParser(description='Returns RFdiffusion contig code from a PDB file')
+    parser = argparse.ArgumentParser(description='Returns RFdiffusion contigs from a PDB file by taking chains ID and distance_threshold as inputs')
     parser.add_argument('--pdb', type=str, help='Path to the PDB file', required=True)
     parser.add_argument('--ab1', type=str, help='Antibody first chain or nanobody unique chain', required=True)
     parser.add_argument('--ab2', type=str, help='Antibody second chain', required=False)

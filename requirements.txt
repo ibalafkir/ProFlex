@@ -1,9 +1,0 @@
-biopandas
-pdb-tools
-numpy
-pandas
-copy
-argparse
-pdb-tools
-os
-mdtraj

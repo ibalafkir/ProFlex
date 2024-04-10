@@ -18,8 +18,9 @@ class RFDContigs:
         """
         Makes a list of lists with chunks of followed residues
         BUG when it gets two same followed numbers eg [..., 220, 220,...] bc it starts a new chunk, example in 5HGG_b,
-        this happens when the first 220 corresponds to a conformatin (eg A) and the second to another (eg B)
-        No problem if the list it gets has no repeated res numbers
+            this happens when the first 220 corresponds to a conformatin (eg A) and the second to another (eg B)
+            No problem if the list it gets has no repeated res numbers
+        TODO the removal of lists with only one element is not ideal here and should be in chunk_filter
         """
         result = []
         subgroup = []
@@ -33,7 +34,6 @@ class RFDContigs:
             result.append(subgroup)
         
         # Deletes isolate residue numbers like 5 in [1,2,3], [5], [8, 9, 10] / THIS FITS BETTER IN chunk_filter (it works here though)
-        
         for i in result: 
             if len(i)==1: 
                 result.remove(i) 
@@ -52,10 +52,9 @@ class RFDContigs:
 
     def get_contigs(chain, intchainadditional, include_extremes=True):
         """
-        Generates contigs code
+        Generates contigs
         Inputs. PDB df of a SINGLE chain and PDB df with selected as interactive residues with the other chain
-        Tip: the last df should be amplified so that the diffused regions altogether are not too segmented (that's why the parameter is 'additional')
-        
+        Tip. The last df should be amplified so that the diffused regions altogether are not too segmented (that's why the parameter is 'additional')
         """
         
         # Loading data and defining variables
@@ -208,8 +207,9 @@ class RFDSchains:
         return list(chain_id_1) + first_chain_rigid_resnumbers, list(chain_id_2) + second_chain_rigid_resnumbers
 
     def delete_sidechains(df, half):
-        """ Deletes side chains of the given chain ID and residue numbers (contained in a list)
-                in an ATOM pandas dataframe of a PDB
+        """ 
+        Deletes side chains of the given chain ID and residue numbers (contained in a list)
+        in an ATOM pandas dataframe of a PDB
         """
         atom_name_keep = ['N','CA', 'C', 'O']
             
@@ -225,14 +225,14 @@ class RFDSchains:
         return df_filt
 
     def get_sidechains(df, half):
-        """ Gets side chains of the given chain ID and residue numbers (contained in a list)
-                in an ATOM pandas dataframe of a PDB
+        """ 
+        Gets side chains of the given chain ID and residue numbers (contained in a list)
+        in an ATOM pandas dataframe of a PDB
         """
         atom_name_nokeep = ['N','CA', 'C', 'O']
             
         # Boolean mask strategy to know which rows will be deleted
         # i.e. the ones that are not included in the mask
-            
         mask_get_ch = (df['chain_id'].isin(half)) & \
                         (df['residue_number'].isin(half)) & \
                         (~df['atom_name'].isin(atom_name_nokeep))

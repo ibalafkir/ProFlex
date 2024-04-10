@@ -4,6 +4,10 @@ from biopandas.pdb import PandasPdb
 import argparse
 import os
 
+"""
+Gets the number of residues in a PDB by renumbering them from 1 and giving as output the last residue number    
+"""
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Returns total number of residues')
     parser.add_argument('pdb', type=str, help='Path to the PDB file')
