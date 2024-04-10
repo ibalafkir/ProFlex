@@ -17,7 +17,7 @@ pip install os
 pip install mdtraj
 ```
 
-## Install the package
+### Install the package
 For developers:
 ```bash
 python setup.py develop
