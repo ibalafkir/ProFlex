@@ -189,6 +189,10 @@ class RFDFixer:
         else:
             print(f"Number of backbone atoms do not coincide ({len(pdb_rfd_df)} vs {len(pdb_before_rfd_backbone_atom_df)}), check if any backbone atom is repeated and delete lines manually") 
             # As certain choices like b-factors needs to be managed by the user, we cannot guess
+            
+            ### Test which atom names can be absent
+
+                        
             exit(1)
 
         pdb_rfd_df['chain_id'] = pdb_before_rfd_backbone_atom_df['chain_id']

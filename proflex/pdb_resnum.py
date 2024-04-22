@@ -5,7 +5,8 @@ import argparse
 import os
 
 """
-Gets the number of residues in a PDB by renumbering them from 1 and giving as output the last residue number    
+Gets the number of residues in a PDB
+Assumes the input PDB has no alt_locations 
 """
 
 if __name__ == "__main__":
@@ -13,9 +14,6 @@ if __name__ == "__main__":
     parser.add_argument('pdb', type=str, help='Path to the PDB file')
     args = parser.parse_args()
     pd = args.pdb
-    PDBProcessor.pdb_resnum(pd, 1)
-    atom_df = PDBUtils.get_pdb_atoms_df(pd[:-4]+'_renum.pdb')
-    atom_df_relevant = PDBUtils.get_relevant_columns(atom_df)
-    res_num_list = RFDContigs.get_resnum_list(atom_df_relevant)
-    print(res_num_list[-1])
-    os.remove(pd[:-4]+'_renum.pdb')
+    atom_df = PDBUtils.get_pdb_atoms_df(pd)
+    atom_df_ca = atom_df[atom_df['atom_name']=='CA']
+    print(f'Number of residues assuming the inexistence of alternative locations and that there is a CA per residue: {len(atom_df_ca)}')

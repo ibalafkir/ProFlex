@@ -4,7 +4,7 @@ Explore ProFlex protocol for rigid-body protein-protein docking, interface diffu
 ## Installation
 ### Environment manual setup (WIP)
 ```bash
-conda create -n proflex python=3.10
+conda create -n proflex python=3.11
 conda activate proflex
 pip install biopandas
 pip install pdb-tools
@@ -15,6 +15,7 @@ pip install argparse
 pip install pdb-tools
 pip install os
 pip install mdtraj
+pip install matplotlib
 ```
 
 ### Install the package
