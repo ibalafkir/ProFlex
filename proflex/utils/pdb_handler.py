@@ -187,7 +187,7 @@ class RFDFixer:
         if len(pdb_rfd_df) == len(pdb_before_rfd_backbone_atom_df):
             print("Number of backbone atoms coincide thus the correction can be done")
         else:
-            print(f"Number of backbone atoms do not coincide ({len(pdb_rfd_df)} vs {len(pdb_before_rfd_backbone_atom_df)}), check if any backbone atom is repeated and delete lines manually") 
+            print(f"Number of backbone atoms do not coincide ({len(pdb_rfd_df)} vs {len(pdb_before_rfd_backbone_atom_df)}) (first is RFdiffusion model, second is original reference PDB) check if any backbone atom is repeated and delete lines manually") 
             # As certain choices like b-factors needs to be managed by the user, we cannot guess
             
             ### Test which atom names can be absent

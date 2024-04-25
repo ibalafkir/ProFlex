@@ -8,45 +8,19 @@ if [ $# -ne 1 ]; then
 fi
 
 solver=$1
+files=$(ls *b.pdb && ls *ubnoT.pdb) # Reference PDBs, meaning the ones with which RFdiffusion was run and thus
+                                    # the ones that serve as reference point for diffusion models correction
+                                    # Edit this variable to change references e.g.: files=$(ls 6DBG_b.pdb)
 
-
-for ref in *_proc.pdb; do
+for ref in $files; do
 
     start_time=$(date +%s)
-    # diff="${ref%.*}"_diff_N*.pdb # To correct PDBs directly from RFdiffusion
     attdiffpack="${ref%.*}"_diff_N*attnpacked_cor.pdb # To correct PDB from RFd + AttnPacker (output of the last)
-
     for model in $attdiffpack; do # $diff for the first and $attdiffpack for the second
         python "$solver" "$ref" "$model"
-    done
-	
+    done	
 	end_time=$(date +%s)
 	execution_time=$((end_time - start_time))
 	echo "All models belonging to $ref were corrected in $execution_time seconds"
 	echo ""
 done
-
-
-
-
-
-: '
-ref=$2 
-
-if [ ! -f "$ref" ]; then
-    echo "'$ref' does not exist"
-    exit 1
-fi
-
-diff="${ref%.*}"_diff_N*.pdb
-start_time=$(date +%s)
-
-for model in $diff; do
-    python "$solver" "$ref" "$model"
-done
-
-end_time=$(date +%s)
-execution_time=$((end_time - start_time))
-echo "All models belonging to $ref were corrected in $execution_time seconds"
-
-'
