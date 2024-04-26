@@ -1,21 +1,13 @@
 # ProFlex
-Explore ProFlex protocol for rigid-body protein-protein docking, interface diffusion, and Monte Carlo rotations/translations using PyDock, RFDiffusion, and PELE. Optimize protein interactions dynamically.
+Explore ProFlex protocol for interface diffusion and Monte Carlo rotations/translations using RFDiffusion and PELE. Optimize protein interactions dynamically.
 
 ## Installation
 ### Environment manual setup (WIP)
 ```bash
-conda create -n proflex python=3.11
-conda activate proflex
-pip install biopandas
-pip install pdb-tools
-pip install numpy
-pip install pandas
-pip install copy
-pip install argparse
-pip install pdb-tools
-pip install os
-pip install mdtraj
-pip install matplotlib
+$ git@github.com:ibalafkir/ProFlex.git
+$ conda create --name proflex python=3.11
+$ conda activate proflex
+$ if [ -f requirements.txt ]; then pip install -r ./ProFlex/requirements.txt; fi
 ```
 
 ### Install the package
