@@ -5,64 +5,21 @@ threshold up to which 2 residues are considered to be interacting. The user need
 """
 import argparse
 import pandas as pd
-from proflex.utils import PDBUtils
-from proflex.utils import InterfaceAnalyzer
+from proflex.pdb import PdbDf
+from proflex.interface import InterfaceAnalyzer
 
-def analyze_interface(pdb_file, id1, id2, distance_threshold):
+def run(pdb_file, id1, id2, distance_threshold):
 
-    atom_df = PDBUtils.get_pdb_atoms_df(pdb_file)
-    atom_df_ca = PDBUtils.get_ca(atom_df)
-    chain_1 = PDBUtils.get_chain(atom_df_ca, id1)
-    chain_2 = PDBUtils.get_chain(atom_df_ca, id2)
-    chain1_relevant = PDBUtils.get_relevant_columns(chain_1)
-    chain2_relevant = PDBUtils.get_relevant_columns(chain_2)
-    int1, int2, detected_interactions = InterfaceAnalyzer.get_interface_residues_by_chain(chain1_relevant, chain2_relevant, distance_threshold)
-    intchain1additional = InterfaceAnalyzer.amplify_selection_residues(int1, chain1_relevant)
-    intchain2additional = InterfaceAnalyzer.amplify_selection_residues(int2, chain2_relevant)
+    atom_df = PdbDf.atoms(pdb_file)
+    atom_df_ca = PdbDf.ca(atom_df)
+    chain_1 = PdbDf.chain(atom_df_ca, id1)
+    chain_2 = PdbDf.chain(atom_df_ca, id2)
+    chain1_relevant = PdbDf.rel_col(chain_1)
+    chain2_relevant = PdbDf.rel_col(chain_2)
+    int1, int2, detected_interactions = InterfaceAnalyzer.calculate(chain1_relevant, chain2_relevant, distance_threshold)
+    intchain1additional = InterfaceAnalyzer.extend_neighbourhood(int1, chain1_relevant)
+    intchain2additional = InterfaceAnalyzer.extend_neighbourhood(int2, chain2_relevant)
     return int1, int2, detected_interactions, intchain1additional, intchain2additional
-
-# Create a new class of this function?
-def get_pele_com_distance(int1, int2, id1, id2):
-    """
-    From 2 pandas df inputs (each containing residues involved in interactions) and their chain IDs,
-    it obtains the way this info must be introduced in the com_distance PELE metric
-    """
-    
-    def del_repeated(lst):
-        """
-        Deletes repeated elements in a list
-        """
-        result = []
-        for i in lst:
-            if i not in result:
-                result.append(i)
-            else:
-                continue
-        return result
-    int1_resnum = int1['residue_number'].to_list()
-    int1_resnum_sorted_unique = sorted(del_repeated(int1_resnum))
-    int1_resnum_sorted_unique_chname = [f"{id1}:" + str(element) for element in int1_resnum_sorted_unique]
-    int1_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int1_resnum_sorted_unique_chname]
-    pele_code_1 = ', '.join(int1_resnum_sorted_unique_chname_mod)
-    
-    int2_resnum = int2['residue_number'].to_list()
-    int2_resnum_sorted_unique = sorted(del_repeated(int2_resnum))
-    int2_resnum_sorted_unique_chname = [f"{id2}:" + str(element) for element in int2_resnum_sorted_unique]
-    int2_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int2_resnum_sorted_unique_chname]
-    pele_code_2 = ', '.join(int2_resnum_sorted_unique_chname_mod)
-
-
-
-    print("{")
-    print('"type":"com_distance",')
-    print(f'"tag":"{id1}{id2}_distance",')
-    print('\t"selection_group_1":{')
-    print('\t\t"links": { "ids":[' + str(pele_code_1) + ']}')
-    print('\t\t},')
-    print('\t"selection_group_2":{')
-    print('\t\t"links": { "ids":[' + str(pele_code_2) + ']}')
-    print('\t\t}')
-    print("},")  
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Calculates interface residues between two chains of PDB file')
@@ -70,15 +27,13 @@ if __name__ == "__main__":
     parser.add_argument('--id1', type=str, help='First chain')
     parser.add_argument('--id2', type=str, help='Second chain')
     parser.add_argument('--distance_threshold', type=float,
-                        help='Distance threshold for interface '
-                             'residues (6 Angstrom is default)', default=6)
+                        help='Distance threshold for interface residues (6 Angstrom is default)', default=6)
     args = parser.parse_args()
     pdb_file = args.pdb_file
     id1 = args.id1
     id2 = args.id2
     distance_threshold = args.distance_threshold
-    int1, int2, detected_interactions, intchain1additional, intchain2additional = analyze_interface(pdb_file, args.id1, args.id2, distance_threshold)
-
+    int1, int2, detected_interactions, intchain1additional, intchain2additional = run(pdb_file, args.id1, args.id2, distance_threshold)
     
     if not int1.empty and not int2.empty:
         pd.set_option('display.max_rows', None)
@@ -94,6 +49,6 @@ if __name__ == "__main__":
         print("Additional interacting residues (neighborhood = 2 residues) in chain", id2)
         print(intchain2additional, "\n")
         print("Code for PELE com_distance metric \n")
-        get_pele_com_distance(int1, int2, id1, id2)
+        InterfaceAnalyzer.pele_com_distance(int1, int2, id1, id2)
     else:
         print("Interactions could not be detected at the distance threshold of", distance_threshold, "Angstroms")

@@ -6,10 +6,9 @@ python /path/to/rfd_contigs_generator.py --pdb XXXX.pdb --ab1 H --ab2 L --ag A -
 python /path/to/rfd_contigs_generator.py --pdb XXXX.pdb --ab1 B --ag A --distance_threshold 7
 
 """
-
-from proflex.utils import PDBUtils
-from proflex.utils import InterfaceAnalyzer
-from proflex.rfdiffusion import RFDContigs
+from proflex.pdb import PdbDf
+from proflex.interface import InterfaceAnalyzer
+from proflex.rfdiffusion import RFdContigs
 import argparse
 import pandas as pd
 
@@ -32,9 +31,9 @@ if __name__ == "__main__":
     if ab2 is None:
 
         # Loading data
-        atom_df = PDBUtils.get_pdb_atoms_df(pdb_file)
-        atom_df_ca = PDBUtils.get_ca(atom_df)
-        chains_id_ordered = PDBUtils.get_chains_id(atom_df_ca)        
+        atom_df = PdbDf.atoms(pdb_file)
+        atom_df_ca = PdbDf.ca(atom_df)
+        chains_id_ordered = PdbDf.chains_id(atom_df_ca)        
 
         # Setting the contigs order so that it coincides with the order of the chains in the PDB file
         # (compulsory for a success run in RFdiffusion)
@@ -47,16 +46,16 @@ if __name__ == "__main__":
             id2 = ab1
         
         # Analyzing interface and getting contigs
-        chain_1 = PDBUtils.get_chain(atom_df_ca, id1)
-        chain_2 = PDBUtils.get_chain(atom_df_ca, id2)
-        chain1_relevant = PDBUtils.get_relevant_columns(chain_1)
-        chain2_relevant = PDBUtils.get_relevant_columns(chain_2)
+        chain_1 = PdbDf.chain(atom_df_ca, id1)
+        chain_2 = PdbDf.chain(atom_df_ca, id2)
+        chain1_relevant = PdbDf.rel_col(chain_1)
+        chain2_relevant = PdbDf.rel_col(chain_2)
         int1, int2, detected_interactions = InterfaceAnalyzer.get_interface_residues_by_chain(
             chain1_relevant, chain2_relevant, d_thold) # detected_interactions is unused
-        intchain1additional = InterfaceAnalyzer.amplify_selection_residues(int1, chain1_relevant)
-        intchain2additional = InterfaceAnalyzer.amplify_selection_residues(int2, chain2_relevant)
-        contigs_1 = RFDContigs.get_contigs(chain_1, intchain1additional)
-        contigs_2 = RFDContigs.get_contigs(chain_2, intchain2additional)
+        intchain1additional = InterfaceAnalyzer.extend_neighbourhood(int1, chain1_relevant)
+        intchain2additional = InterfaceAnalyzer.extend_neighbourhood(int2, chain2_relevant)
+        contigs_1 = RFdContigs.generate(chain_1, intchain1additional)
+        contigs_2 = RFdContigs.generate(chain_2, intchain2additional)
         contigs = f"[{contigs_1}0 {contigs_2[:-1]}]"
         print(contigs)
     
@@ -67,33 +66,33 @@ if __name__ == "__main__":
         id1 = ab1
         id2 = ab2
         id3 = ag
-        atom_df = PDBUtils.get_pdb_atoms_df(pdb_file)
-        atom_df_ca = PDBUtils.get_ca(atom_df)
-        chains_id_ordered = PDBUtils.get_chains_id(atom_df_ca)
-        chain_1 = PDBUtils.get_chain(atom_df_ca, id1)
-        chain_2 = PDBUtils.get_chain(atom_df_ca, id2)
-        chain_3 = PDBUtils.get_chain(atom_df_ca, id3)
-        chain1_relevant = PDBUtils.get_relevant_columns(chain_1)
-        chain2_relevant = PDBUtils.get_relevant_columns(chain_2)
-        chain3_relevant = PDBUtils.get_relevant_columns(chain_3)
-        int1, int3_1, detected_interactions = InterfaceAnalyzer.get_interface_residues_by_chain(
+        atom_df = PdbDf.atoms(pdb_file)
+        atom_df_ca = PdbDf.ca(atom_df)
+        chains_id_ordered = PdbDf.chains_id(atom_df_ca)
+        chain_1 = PdbDf.chain(atom_df_ca, id1)
+        chain_2 = PdbDf.chain(atom_df_ca, id2)
+        chain_3 = PdbDf.chain(atom_df_ca, id3)
+        chain1_relevant = PdbDf.rel_col(chain_1)
+        chain2_relevant = PdbDf.rel_col(chain_2)
+        chain3_relevant = PdbDf.rel_col(chain_3)
+        int1, int3_1, detected_interactions = InterfaceAnalyzer.calculate(
             chain1_relevant, chain3_relevant, d_thold) # detected_interactions is unused
-        intchain1additional = InterfaceAnalyzer.amplify_selection_residues(int1, chain1_relevant)
-        int2, int3_2, detected_interactions = InterfaceAnalyzer.get_interface_residues_by_chain(
+        intchain1additional = InterfaceAnalyzer.extend_neighbourhood(int1, chain1_relevant)
+        int2, int3_2, detected_interactions = InterfaceAnalyzer.calculate(
             chain2_relevant, chain3_relevant, d_thold) # detected_interactions is unused
-        intchain2additional = InterfaceAnalyzer.amplify_selection_residues(int2, chain1_relevant)
+        intchain2additional = InterfaceAnalyzer.extend_neighbourhood(int2, chain1_relevant)
         
         # Getting contigs for the antibody
-        contigs_1 = RFDContigs.get_contigs(chain_1, intchain1additional)
-        contigs_2 = RFDContigs.get_contigs(chain_2, intchain2additional)
+        contigs_1 = RFdContigs.generate(chain_1, intchain1additional)
+        contigs_2 = RFdContigs.generate(chain_2, intchain2additional)
         
         # Analyzing the interface of the antigen with respect to the antibody and getting contigs for the antigen
         merged_ag_int = pd.concat([int3_1, int3_2]) # Coges los seleccionados de cada interfaz y mezclas
         merged_ag_int_sorted = merged_ag_int.sort_values(by='residue_number') # Los ordenas por res num
         merged_ag_int_uniq = merged_ag_int_sorted.drop_duplicates(subset=['residue_number']) # Elimina duplicados en res num
         int3_mixed = merged_ag_int_uniq # Esto es todo lo seleccionado en la interfaz
-        intchain3additional = InterfaceAnalyzer.amplify_selection_residues(int3_mixed, chain3_relevant) # Amplifica por vecinos
-        contigs_3 = RFDContigs.get_contigs(chain_3, intchain3additional)
+        intchain3additional = InterfaceAnalyzer.extend_neighbourhood(int3_mixed, chain3_relevant) # Amplifica por vecinos
+        contigs_3 = RFdContigs.generate(chain_3, intchain3additional)
         
         # Setting the contigs order so that it coincides with the order of the chains in the PDB file
         # (compulsory for a success run in RFdiffusion) and building the contigs

@@ -5,11 +5,11 @@ Processes a PDB to adjust it to the pipeline:
 - Removes HETATOMS (ligands, metals, waters...)
 - Removes other unnecessary lines
 
-A PDB without any gaps is expected (if a Maestro Schrodinger license is available, maestro_fill_gaps.sh is advised to be used) 
+A PDB without any gaps is expected
 """
 
 import argparse
-from proflex.utils import PDBProcessor, RFDFixer
+from proflex.pdb import PdbHandler
 import os
 
 
@@ -25,24 +25,21 @@ if __name__ == "__main__":
     pdb_file = args.pdb
     chid = args.chains
     chidd = chid.split(",")
-
     print("Saving atom lines from wanted chains and tidying...")
-    PDBProcessor.pdb_keepchain(pdb_file,chidd)
-    RFDFixer.pdb_tidying(pdb_file[:-4]+'_ch.pdb')
+    PdbHandler.chain(pdb_file,chidd)
+    PdbHandler.tidy(pdb_file[:-4]+'_ch.pdb')
 
     print("Fixing insertions...")
-    PDBProcessor.fix_insertions(pdb_file[:-4]+'_ch_tidied.pdb')
-    PDBProcessor.fix_ter_mistakes(pdb_file[:-4]+'_ch_tidied_insfixed.pdb')
-    RFDFixer.pdb_tidying(pdb_file[:-4]+'_ch_tidied_insfixed_terfixed.pdb')
+    PdbHandler.fix_insertions(pdb_file[:-4]+'_ch_tidied.pdb')
+    PdbHandler.fix_ter_mistakes(pdb_file[:-4]+'_ch_tidied_insfixed.pdb')
+    PdbHandler.tidy(pdb_file[:-4]+'_ch_tidied_insfixed_terfixed.pdb')
     
     """
-    
     # NOT NECESSARY FOR NOW, DUE TO LINE 30 USE OF BIOPANDAS
-    
     print("Removing HETATOMS...") 
-    PDBProcessor.remove_hetatm(pdb_file[:-4]+'_ch_insfixed'+'_terfixed.pdb')
+    PdbHandler.remove_hetatm(pdb_file[:-4]+'_ch_insfixed'+'_terfixed.pdb')
     print("Removing unnecessary lines...")
-    PDBProcessor.remove_lines(pdb_file[:-4]+'_ch_insfixed'+'_terfixed_nohetatm.pdb', ['CRYST1', 'ANISOU', 'CONECT', 'MASTER' 'HEADER', 'TITLE', 'COMPND', 'SOURCE', 'KEYWDS', 'EXPDATA', 'AUTHOR', 'REVDAT', 'JRNL', 'REMARK'])
+    PdbHandler.custom_remove(pdb_file[:-4]+'_ch_insfixed'+'_terfixed_nohetatm.pdb', ['CRYST1', 'ANISOU', 'CONECT', 'MASTER' 'HEADER', 'TITLE', 'COMPND', 'SOURCE', 'KEYWDS', 'EXPDATA', 'AUTHOR', 'REVDAT', 'JRNL', 'REMARK'])
     # TODO more lines to be removed might be added soon
 
     """
@@ -53,11 +50,11 @@ if __name__ == "__main__":
     pdb_name_ch_tidied_insfixed_terfixed = pdb_name_ch_tidied_insfixed[:-4]+'_terfixed.pdb'
     pdb_name_ch_tidied_insfixed_terfixed_tidied = pdb_name_ch_tidied_insfixed_terfixed[:-4]+'_tidied.pdb'
     
-    os.rename(pdb_name_ch_tidied_insfixed_terfixed_tidied, pdb_name+'_PROC.pdb')
+    os.rename(pdb_name_ch_tidied_insfixed_terfixed_tidied, pdb_name+'_proc.pdb')
     
     os.remove(pdb_name_ch)
     os.remove(pdb_name_ch_tidied)
     os.remove(pdb_name_ch_tidied_insfixed)
     os.remove(pdb_name_ch_tidied_insfixed_terfixed)
     
-    print(f"Output file: {pdb_name+'_PROC.pdb'}")
+    print(f"Output file: {pdb_name+'_proc.pdb'}")

@@ -1,10 +1,15 @@
-from proflex.utils import PDBUtils
+"""
+Functionalities related to RFdiffusion
+"""
 
-class RFDContigs:
+from proflex.pdb import PdbDf
+from biopandas.pdb import PandasPdb
+
+class RFdContigs:
     """
     Generation of contigs in RFdiffusion
     """
-    def get_resnum_list(df):
+    def resnum_list(df):
         """
         Extracts list of residue numbers from the
         residue_number column in an ATOM pandas dataframe
@@ -14,7 +19,7 @@ class RFDContigs:
             result.append(int(i))
         return result
 
-    def get_chunks(lst):
+    def chunks(lst):
         """
         Makes a list of lists with chunks of followed residues
         BUG when it gets two same followed numbers eg [..., 220, 220,...] bc it starts a new chunk, example in 5HGG_b,
@@ -32,7 +37,6 @@ class RFDContigs:
                 subgroup = [num]
         if subgroup:
             result.append(subgroup)
-
         # Deletes isolate residue numbers like 5 in [1,2,3], [5], [8, 9, 10] / THIS FITS BETTER IN chunk_filter (it works here though)
         for i in result:
             if len(i)==1:
@@ -43,6 +47,7 @@ class RFDContigs:
         """
         Returns a list without elements of length < 3
         so as not to diffuse regions of less than 3 aas
+        For developers: length filtering must be implemented here
         """
         result = []
         for i in lst:
@@ -50,31 +55,29 @@ class RFDContigs:
                 result.append(i)
         return result
 
-    def get_contigs(chain, intchainadditional, include_extremes=True):
+    def generate(chain, intchainadditional):
         """
         Generates contigs
-        Inputs. PDB df of a SINGLE chain and PDB df with selected as interactive residues with the other chain
+        Inputs. PDB dataframe of a SINGLE chain and PDB dataframe with selected as interactive residues with the other chain
         Tip. The last df should be amplified so that the diffused regions altogether are not too segmented (that's why the parameter is 'additional')
         """
 
         # Loading data and defining variables
-        id = PDBUtils.get_chains_id(chain)[0]
-        chain_start = RFDContigs.get_resnum_list(chain)[0]
-        chain_end = RFDContigs.get_resnum_list(chain)[-1]
-        chain_allresnum = RFDContigs.get_resnum_list(chain)
-        intera_resnum =  RFDContigs.get_resnum_list(intchainadditional)
-        intera_lst = RFDContigs.get_chunks(intera_resnum)
-        intera_lst = RFDContigs.chunk_filter(intera_lst)
+        id = PdbDf.chains_id(chain)[0]
+        chain_start = RFdContigs.resnum_list(chain)[0]
+        chain_end = RFdContigs.resnum_list(chain)[-1]
+        chain_allresnum = RFdContigs.resnum_list(chain)
+        intera_resnum =  RFdContigs.resnum_list(intchainadditional)
+        intera_lst = RFdContigs.chunks(intera_resnum)
+        intera_lst = RFdContigs.chunk_filter(intera_lst)
 
         # RFdiffusion cannot deal with rigid extremes in a chain if they are just next to a flexible zone
-        # this nuance is written here because it has to do with how the program works, but it might be
-        # more logical to transfer and adapt it to amplify in interface_analyzer
-        if include_extremes == True:
-            if intera_lst:
-                if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
-                    intera_lst[0].insert(0, chain_start)
-                if chain_end not in intera_lst[-1] and chain_end-1 in intera_lst[-1]:
-                    intera_lst[-1].append(chain_end)
+        # This nuance is coded here because it has to do with how the program works
+        if intera_lst:
+            if chain_start not in intera_lst[0] and chain_start+1 in intera_lst[0]:
+                intera_lst[0].insert(0, chain_start)
+            if chain_end not in intera_lst[-1] and chain_end-1 in intera_lst[-1]:
+                intera_lst[-1].append(chain_end)
 
         # Flattens the list
         intera_lst_extended = []
@@ -83,7 +86,6 @@ class RFDContigs:
 
         # Generates contigs
         if intera_lst:
-            #print(intera_lst)
             if len(intera_lst_extended) == len(chain_allresnum):
                 contig = f"{len(chain_allresnum)}-{len(chain_allresnum)}/"
 
@@ -135,8 +137,45 @@ class RFDContigs:
             contig = f"{id}{chain_start}-{chain_end}"+"/"
 
         return contig
-class RFDSchains:
 
+
+class RFdFix:
+    """
+    Fixes the PDB format of models of RFdiffusion
+    """
+
+    def correct(diff_model, reference):
+        """
+        Assigns chain ID and residues ID (using the input PDB in RFD) 
+        to the output of RFdiffusion
+        Both must have the same atom lines i.e. the reference must have only backbone atoms
+        """
+        diff_model_atom_df = PdbDf.atoms(diff_model)
+        reference_atom_df = PdbDf.atoms(reference)
+        
+        if len(diff_model_atom_df) == len(reference_atom_df):
+            print("Number of backbone atoms coincide thus the correction can be done")
+        else:
+            print(f"Number of backbone atoms do not coincide ({len(diff_model_atom_df)} vs {len(reference_atom_df)}) (first is RFdiffusion model, second is original reference PDB) check if any backbone atom is repeated and delete lines manually") 
+            # As certain choices like b-factors needs to be managed by the user, we cannot guess
+            ### Test which atom names can be absent
+            exit(1)
+        diff_model_atom_df['chain_id'] = reference_atom_df['chain_id']
+        diff_model_atom_df['residue_number'] = reference_atom_df['residue_number']
+        diff_model_fixedName = diff_model[:len(diff_model)-4]+ "_chainsfixed.pdb"
+        pdb_rfd_chainsfixed = PandasPdb().read_pdb(diff_model)
+        pdb_rfd_chainsfixed.df['ATOM'] = diff_model_atom_df
+        pdb_rfd_chainsfixed.to_pdb(path= diff_model_fixedName, records = ['ATOM'], gz=False)  
+
+
+
+
+
+# This class is not really used, but it is useful to have it in case we need it
+class RFdSch:
+    """
+    Several processes to a contigs code 
+    """
     def get_contig_chid(contiglist):
         """
         Gets a list of chains ID contained in a contig code.
@@ -188,21 +227,21 @@ class RFDSchains:
         residue numbers of rigid residues (rest of elements)
         """
 
-        chain_id_1 = RFDSchains.get_contig_chid(contig)[0]
+        chain_id_1 = RFdSch.get_contig_chid(contig)[0]
         first_chain = contig.split('/0')[0]
         first_chain = first_chain[1:]
         first_chain_chunks = first_chain.split('/')
-        first_chain_rigid_ranges = RFDSchains.get_rigid_ranges(first_chain_chunks)
-        first_chain_rigid_ranges = RFDSchains.del_spaces(first_chain_rigid_ranges)
-        first_chain_rigid_resnumbers = RFDSchains.expand_ranges(first_chain_rigid_ranges)
+        first_chain_rigid_ranges = RFdSch.get_rigid_ranges(first_chain_chunks)
+        first_chain_rigid_ranges = RFdSch.del_spaces(first_chain_rigid_ranges)
+        first_chain_rigid_resnumbers = RFdSch.expand_ranges(first_chain_rigid_ranges)
 
-        chain_id_2 = RFDSchains.get_contig_chid(contig)[1]
+        chain_id_2 = RFdSch.get_contig_chid(contig)[1]
         second_chain = contig.split('/0')[1]
         second_chain = second_chain[:len(second_chain)-1]
         second_chain_chunks = second_chain.split('/')
-        second_chain_rigid_ranges = RFDSchains.get_rigid_ranges(second_chain_chunks)
-        second_chain_rigid_ranges = RFDSchains.del_spaces(second_chain_rigid_ranges)
-        second_chain_rigid_resnumbers = RFDSchains.expand_ranges(second_chain_rigid_ranges)
+        second_chain_rigid_ranges = RFdSch.get_rigid_ranges(second_chain_chunks)
+        second_chain_rigid_ranges = RFdSch.del_spaces(second_chain_rigid_ranges)
+        second_chain_rigid_resnumbers = RFdSch.expand_ranges(second_chain_rigid_ranges)
 
         return list(chain_id_1) + first_chain_rigid_resnumbers, list(chain_id_2) + second_chain_rigid_resnumbers
 

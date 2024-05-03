@@ -1,12 +1,14 @@
+"""
+ProFlex interface analyzing functionalities    
+"""
 import numpy as np
 import pandas as pd
 
 class InterfaceAnalyzer:
     """
-    Functions to extract interface residues from PDB files
+    PDB files interface residues extractor
     """
-
-    def get_interface_residues_by_chain(chain1: str, chain2: str, distance_threshold=6):
+    def calculate(chain1: str, chain2: str, distance_threshold=8):
         """
         Extraction of interface residues, meaning residues which CA are at a maximum given distance
         (default = 6 Angstrom), which is the maximum distance up to which interaction is considered
@@ -38,7 +40,7 @@ class InterfaceAnalyzer:
         # print("Calculating distances... \n")
         return residues_interface_1, residues_interface_2, detected_interactions
 
-    def get_interaction_distances(chain1: str, chain2: str, distance_threshold=6):
+    def distances(chain1: str, chain2: str, distance_threshold=6):
         """
         Extraction of distances between interface residues, meaning residues which CA are at a maximum given
         distance (default = 6 Angstrom), which is the maximum distance up to which interaction is considered
@@ -70,7 +72,7 @@ class InterfaceAnalyzer:
         # print("Calculating distances... \n")
         return detected_distances
 
-    def amplify_selection_residues(int, chainrelevant):
+    def extend_neighbourhood(int, chainrelevant):
         """
         Amplifies the selected residues in a DataFrame by neighborhood = 2
         :param pandas.DataFrame of a chain with interacting residues: pandas.DataFrame
@@ -108,3 +110,46 @@ class InterfaceAnalyzer:
         int_sorted_unique = int_sorted.drop_duplicates()
         # print("Detecting additional interactions (neighborhood = 2) residues for diffusion processes of chain", chainrelevant['chain_id'].values[0], "... \n")
         return int_sorted_unique
+
+
+    def pele_com_distance(int1, int2, id1, id2):
+        """
+        From 2 pandas df inputs (each containing residues involved in interactions) and their chain IDs,
+        it obtains the way this info must be introduced in the com_distance PELE metric
+        """
+        
+        def del_repeated(lst):
+            """
+            Deletes repeated elements in a list
+            """
+            result = []
+            for i in lst:
+                if i not in result:
+                    result.append(i)
+                else:
+                    continue
+            return result
+        int1_resnum = int1['residue_number'].to_list()
+        int1_resnum_sorted_unique = sorted(del_repeated(int1_resnum))
+        int1_resnum_sorted_unique_chname = [f"{id1}:" + str(element) for element in int1_resnum_sorted_unique]
+        int1_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int1_resnum_sorted_unique_chname]
+        pele_code_1 = ', '.join(int1_resnum_sorted_unique_chname_mod)
+        
+        int2_resnum = int2['residue_number'].to_list()
+        int2_resnum_sorted_unique = sorted(del_repeated(int2_resnum))
+        int2_resnum_sorted_unique_chname = [f"{id2}:" + str(element) for element in int2_resnum_sorted_unique]
+        int2_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int2_resnum_sorted_unique_chname]
+        pele_code_2 = ', '.join(int2_resnum_sorted_unique_chname_mod)
+
+
+
+        print("{")
+        print('"type":"com_distance",')
+        print(f'"tag":"{id1}{id2}_distance",')
+        print('\t"selection_group_1":{')
+        print('\t\t"links": { "ids":[' + str(pele_code_1) + ']}')
+        print('\t\t},')
+        print('\t"selection_group_2":{')
+        print('\t\t"links": { "ids":[' + str(pele_code_2) + ']}')
+        print('\t\t}')
+        print("},")  

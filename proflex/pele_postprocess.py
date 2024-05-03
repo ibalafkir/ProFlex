@@ -1,6 +1,5 @@
 from proflex import *
 import argparse
-from Bio import PDB
 """
 Processes PELE outputs so that they are well read by RFdiffusion 
 (changes alternative res_names to common ones for now)

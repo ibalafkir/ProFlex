@@ -1,1 +1,1 @@
-from .rfdiffusion_utils import RFDContigs, RFDSchains
+from .rfdiffusion_utils import RFdContigs, RFdFix, RFdSch
