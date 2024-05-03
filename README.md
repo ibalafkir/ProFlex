@@ -30,4 +30,4 @@ $ $SCHRODINGER input.pdb output.pdb -rehtreat -disulfides -fillloops -fillsidech
 ```
 Although bear in mind that each system has its own peculiarities and more preparation actions might need to be run.
 
-To keep the desired chains of a system and remove insertion codes, hetatms and unnecessary PDB lines run ./ProFlex/proflex/preprocessor.py.
+To keep the desired chains of a system and remove insertion codes, hetatms and unnecessary PDB lines run ./ProFlex/proflex/pdb_preprocessor.py.

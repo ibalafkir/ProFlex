@@ -2,7 +2,6 @@
 .DS_Store
 
 # Chemistry files
-*.pdb
 *.rot
 
 # Byte-compiled / optimized / DLL files
