@@ -11,7 +11,7 @@ aka prePDB in other logging statements)
 PDB INPUT MUST BE IN A SINGLE CHAIN ID, OTHERWISE ATTNPACKER CAN'T REPACK ALL CHAINS AND ONLY REPACKS THE FIRST AND THUS THIS DOES NOT WORK!
 
 $ pdb_gap -A <pdb>
-
+# TODO probably delete due to no use of attnpacker
 """
 
 from proflex.utils import RFDFixer, PDBUtils, PDBProcessor

@@ -1,5 +1,10 @@
 """
 Solves the PDB format of an RFdiffusion PDB output (which is all back atoms of all residues in a single chain)
+
+$ python pdb_rfd_fixer.py /Users/ismaelbd01/Desktop/test /Users/ismaelbd01/Desktop/test/1S78_b.pdb
+
+where ./test has the reference PDB and the diffusion models starting by {pdb_code}_diff
+
 """
 
 from proflex.utils import RFDFixer, PDBUtils, PDBProcessor
@@ -8,45 +13,44 @@ import pandas as pd
 from biopandas.pdb import PandasPdb 
 from rfdiffusion import RFDSchains 
 import os
+import sys
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description='Fixes PDB features missed in the output of RFDiffusion'
-        )
-    parser.add_argument('prerfd', type=str, help='Path to the PDB file (input of RFD)')
-    parser.add_argument('postrfd', type=str, help='Path to the output PDB RFDiffusion file')
-    # parser.add_argument('-contigs', type=str, help='Contigs string')
-    args = parser.parse_args()
-    
-    pre = args.prerfd
-    post = args.postrfd
-    # contigs = args.contigs
 
+    
+    w_dir = sys.argv[1]
+    items = os.listdir(w_dir)
+    reference = sys.argv[2]
+    pdbs_to_correct = [os.path.join(w_dir,pdb) for pdb in items if pdb.startswith(os.path.basename(reference)[:-4]+'_diff')]
     # Fixing the .pdb format in the RFD PDB output thanks to the PDB input in RFD
-
-    print(f"Correcting {post}...")
-    RFDFixer.pdb_backbone(pre) 
-    RFDFixer.pdb_atom(pre[:len(pre)-4]+'_backbone.pdb')
-    RFDFixer.correct_rfd_pdbs(post, pre[:len(pre)-4]+'_backbone.pdb')
+    print(f"Correcting diffusion models from {reference}...")
+    RFDFixer.pdb_backbone(reference) 
+    RFDFixer.pdb_atom(reference[:len(reference)-4]+'_backbone.pdb')
     
-    print("Tidying...")
-    RFDFixer.pdb_tidying(post[:len(post)-4]+'_chainsfixed.pdb')
-    
-    print("Deleting temporal files...")
-    pdb_name = pre[:len(pre)-4]
+    for mdl in pdbs_to_correct:
+        print(f"Correcting {mdl}...")
+        RFDFixer.correct_rfd_pdbs(mdl, reference[:-4]+'_backbone.pdb')
+        
+        print("Tidying...")
+        RFDFixer.pdb_tidying(mdl[:len(mdl)-4]+'_chainsfixed.pdb')
+        
+        pdb_rfd_name = mdl[:len(mdl)-4]
+        pdb_rfd_file_chainsfixed = pdb_rfd_name+'_chainsfixed.pdb'
+        pdb_rfd_file_chainsfixed_tidied = pdb_rfd_file_chainsfixed[:-4]+'_tidied.pdb'
+        
+        print("Deleting and renaming temporal files...")
+        os.rename(pdb_rfd_file_chainsfixed_tidied, pdb_rfd_name+'_rfdfixed.pdb')
+        os.remove(pdb_rfd_file_chainsfixed)
+        
+    print("Deleting reference files... \n")
+    pdb_name = reference[:-4]
     pdb_file_backbone = pdb_name+'_backbone.pdb'
     pdb_file_backbone_atom = pdb_file_backbone[:-4]+'_atom.pdb'
-    pdb_rfd_name = post[:len(post)-4]
-    pdb_rfd_file_chainsfixed = pdb_rfd_name+'_chainsfixed.pdb'
-    pdb_rfd_file_chainsfixed_tidied = pdb_rfd_file_chainsfixed[:-4]+'_tidied.pdb'
-    os.rename(pdb_rfd_file_chainsfixed_tidied, pdb_rfd_name+'_rfdfixed.pdb')
     os.remove(pdb_file_backbone)
     os.remove(pdb_file_backbone_atom)
-    os.remove(pdb_rfd_file_chainsfixed)
+
     
-    wd = os.getcwd()
     
-    print(f"Output: {pdb_rfd_name+'_rfdfixed.pdb'}")
     
     
     

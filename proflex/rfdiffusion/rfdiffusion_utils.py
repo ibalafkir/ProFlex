@@ -2,12 +2,12 @@ from proflex.utils import PDBUtils
 
 class RFDContigs:
     """
-    Generation of contigs in RFdiffusion  
+    Generation of contigs in RFdiffusion
     """
     def get_resnum_list(df):
         """
-        Extracts list of residue numbers from the 
-        residue_number column in an ATOM pandas dataframe        
+        Extracts list of residue numbers from the
+        residue_number column in an ATOM pandas dataframe
         """
         result = []
         for i in df['residue_number']:
@@ -32,16 +32,16 @@ class RFDContigs:
                 subgroup = [num]
         if subgroup:
             result.append(subgroup)
-        
+
         # Deletes isolate residue numbers like 5 in [1,2,3], [5], [8, 9, 10] / THIS FITS BETTER IN chunk_filter (it works here though)
-        for i in result: 
-            if len(i)==1: 
-                result.remove(i) 
+        for i in result:
+            if len(i)==1:
+                result.remove(i)
         return result
 
     def chunk_filter(lst):
         """
-        Returns a list without elements of length < 3 
+        Returns a list without elements of length < 3
         so as not to diffuse regions of less than 3 aas
         """
         result = []
@@ -56,7 +56,7 @@ class RFDContigs:
         Inputs. PDB df of a SINGLE chain and PDB df with selected as interactive residues with the other chain
         Tip. The last df should be amplified so that the diffused regions altogether are not too segmented (that's why the parameter is 'additional')
         """
-        
+
         # Loading data and defining variables
         id = PDBUtils.get_chains_id(chain)[0]
         chain_start = RFDContigs.get_resnum_list(chain)[0]
@@ -75,18 +75,18 @@ class RFDContigs:
                     intera_lst[0].insert(0, chain_start)
                 if chain_end not in intera_lst[-1] and chain_end-1 in intera_lst[-1]:
                     intera_lst[-1].append(chain_end)
-        
+
         # Flattens the list
         intera_lst_extended = []
         for sublst in intera_lst:
             intera_lst_extended.extend(sublst)
-        
+
         # Generates contigs
         if intera_lst:
-            print(intera_lst)       
+            #print(intera_lst)
             if len(intera_lst_extended) == len(chain_allresnum):
                 contig = f"{len(chain_allresnum)}-{len(chain_allresnum)}/"
-                
+
             elif chain_start in intera_lst[0] and chain_end not in intera_lst[-1]:
                 contig = f"{len(intera_lst[0])}-{len(intera_lst[0])}/"
                 contig += f"{id}{intera_lst[0][-1]+1}-"
@@ -96,7 +96,7 @@ class RFDContigs:
                     contig += f"{curr_list_start-1}/{len(curr_list)}-{len(curr_list)}/"
                     contig += f"{id}{curr_list_end+1}-"
                 contig += f"{chain_end}"+"/"
-                
+
             elif chain_start in intera_lst[0] and chain_end in intera_lst[-1]:
                 contig = f"{len(intera_lst[0])}-{len(intera_lst[0])}/"
                 contig += f"{id}{intera_lst[0][-1]+1}-"
@@ -108,7 +108,7 @@ class RFDContigs:
                         pass
                     else:
                         contig += f"{id}{curr_list_end+1}-"
-            
+
             elif chain_start not in intera_lst[0] and chain_end in intera_lst[-1]:
                 contig = f"{id}{chain_start}-"
                 for curr_list in intera_lst:
@@ -119,8 +119,8 @@ class RFDContigs:
                         pass
                     else:
                         contig += f"{id}{curr_list_end+1}-"
-                
-            
+
+
             else:
                 contig = f"{id}{chain_start}-"
                 for curr_list in intera_lst:
@@ -136,7 +136,7 @@ class RFDContigs:
 
         return contig
 class RFDSchains:
-    
+
     def get_contig_chid(contiglist):
         """
         Gets a list of chains ID contained in a contig code.
@@ -167,21 +167,21 @@ class RFDSchains:
         """
         result = []
         for item in lst:
-            parts = item.split('-')  
+            parts = item.split('-')
             start = int(parts[-2][1:])
-            end = int(parts[-1]) 
+            end = int(parts[-1])
             result.extend(range(start, end + 1))
         return result
 
     def del_spaces(lst):
         """
-        Deletes spaces in elements of a list if any, often happening in previous results of functions    
+        Deletes spaces in elements of a list if any, often happening in previous results of functions
         """
         result = []
         for i in lst:
             result.append(i.replace(" ", ""))
         return result
-            
+
     def get_rigid_residues(contig):
         """
         Combines functions to get 2 lists, each with the chain ID (first element) and
@@ -207,36 +207,36 @@ class RFDSchains:
         return list(chain_id_1) + first_chain_rigid_resnumbers, list(chain_id_2) + second_chain_rigid_resnumbers
 
     def delete_sidechains(df, half):
-        """ 
+        """
         Deletes side chains of the given chain ID and residue numbers (contained in a list)
         in an ATOM pandas dataframe of a PDB
         """
         atom_name_keep = ['N','CA', 'C', 'O']
-            
+
         # Boolean mask strategy to know which rows will be deleted
         # i.e. the ones that are not included in the mask
-            
+
         mask_delete_ch = (df['chain_id'].isin(half)) & \
                         (df['residue_number'].isin(half)) & \
                         (~df['atom_name'].isin(atom_name_keep))
-            
+
         df_filt = df[~mask_delete_ch]
-            
+
         return df_filt
 
     def get_sidechains(df, half):
-        """ 
+        """
         Gets side chains of the given chain ID and residue numbers (contained in a list)
         in an ATOM pandas dataframe of a PDB
         """
         atom_name_nokeep = ['N','CA', 'C', 'O']
-            
+
         # Boolean mask strategy to know which rows will be deleted
         # i.e. the ones that are not included in the mask
         mask_get_ch = (df['chain_id'].isin(half)) & \
                         (df['residue_number'].isin(half)) & \
                         (~df['atom_name'].isin(atom_name_nokeep))
-            
+
         df_filt = df[mask_get_ch]
-            
+
         return df_filt
