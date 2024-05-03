@@ -2,8 +2,8 @@
 Generates the contigs that indicate the regions to diffuse or fix in RFDiffusion
 Accepts nanobodies (1 chain) or antibodies (2 chains) and antigens (1 chain for now) as inputs
 Example:
-python /path/to/rfd_contigs_generator.py --pdb XXXX.pdb --ab1 H --ab2 L --ag A --distance_threshold 7
-python /path/to/rfd_contigs_generator.py --pdb XXXX.pdb --ab1 B --ag A --distance_threshold 7
+python /path/to/contigs.py --pdb XXXX.pdb --ab1 H --ab2 L --ag A --distance_threshold 7
+python /path/to/contigs.py --pdb XXXX.pdb --ab1 B --ag A --distance_threshold 7
 
 """
 from proflex.pdb import PdbDf
@@ -50,7 +50,7 @@ if __name__ == "__main__":
         chain_2 = PdbDf.chain(atom_df_ca, id2)
         chain1_relevant = PdbDf.rel_col(chain_1)
         chain2_relevant = PdbDf.rel_col(chain_2)
-        int1, int2, detected_interactions = InterfaceAnalyzer.get_interface_residues_by_chain(
+        int1, int2, detected_interactions = InterfaceAnalyzer.calculate(
             chain1_relevant, chain2_relevant, d_thold) # detected_interactions is unused
         intchain1additional = InterfaceAnalyzer.extend_neighbourhood(int1, chain1_relevant)
         intchain2additional = InterfaceAnalyzer.extend_neighbourhood(int2, chain2_relevant)
@@ -93,9 +93,11 @@ if __name__ == "__main__":
         int3_mixed = merged_ag_int_uniq # Esto es todo lo seleccionado en la interfaz
         intchain3additional = InterfaceAnalyzer.extend_neighbourhood(int3_mixed, chain3_relevant) # Amplifica por vecinos
         contigs_3 = RFdContigs.generate(chain_3, intchain3additional)
-        
+    
         # Setting the contigs order so that it coincides with the order of the chains in the PDB file
         # (compulsory for a success run in RFdiffusion) and building the contigs
+        # BUG When the PDB has more than 3 chains, it could not work, e.g. with 1S78 original PDB:
+        # NameError: name 'second' is not defined
         if chains_id_ordered[0] in contigs_1:
             first = contigs_1
         elif chains_id_ordered[0] in contigs_2:
