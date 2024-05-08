@@ -3,6 +3,7 @@ ProFlex interface analyzing functionalities
 """
 import numpy as np
 import pandas as pd
+from proflex.pdb import PdbDf
 
 class InterfaceAnalyzer:
     """
@@ -111,9 +112,23 @@ class InterfaceAnalyzer:
         # print("Detecting additional interactions (neighborhood = 2) residues for diffusion processes of chain", chainrelevant['chain_id'].values[0], "... \n")
         return int_sorted_unique
 
+    def run(pdb_file, id1, id2, distance_threshold):
+
+        atom_df = PdbDf.atoms(pdb_file)
+        atom_df_ca = PdbDf.ca(atom_df)
+        chain_1 = PdbDf.chain(atom_df_ca, id1)
+        chain_2 = PdbDf.chain(atom_df_ca, id2)
+        chain1_relevant = PdbDf.rel_col(chain_1)
+        chain2_relevant = PdbDf.rel_col(chain_2)
+        int1, int2, detected_interactions = InterfaceAnalyzer.calculate(chain1_relevant, chain2_relevant, distance_threshold)
+        intchain1_extended = InterfaceAnalyzer.extend_neighbourhood(int1, chain1_relevant)
+        intchain2_extended = InterfaceAnalyzer.extend_neighbourhood(int2, chain2_relevant)
+        return int1, int2, detected_interactions, intchain1_extended, intchain2_extended
+
 
     def pele_com_distance(int1, int2, id1, id2):
         """
+        # TODO Create a PELETask builder in a class and include this
         From 2 pandas df inputs (each containing residues involved in interactions) and their chain IDs,
         it obtains the way this info must be introduced in the com_distance PELE metric
         """
@@ -140,9 +155,7 @@ class InterfaceAnalyzer:
         int2_resnum_sorted_unique_chname = [f"{id2}:" + str(element) for element in int2_resnum_sorted_unique]
         int2_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int2_resnum_sorted_unique_chname]
         pele_code_2 = ', '.join(int2_resnum_sorted_unique_chname_mod)
-
-
-
+        
         print("{")
         print('"type":"com_distance",')
         print(f'"tag":"{id1}{id2}_distance",')
