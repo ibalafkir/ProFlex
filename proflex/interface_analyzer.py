@@ -36,20 +36,14 @@ if __name__ == "__main__":
         print("--------------------------------------------------------------------------------------------------------------\n")
         print(f"[INFO] Running ProFlex InterfaceAnalyzer for a nanobody-antigen system: {os.path.basename(pdb)}\n")
         print("--------------------------------------------------------------------------------------------------------------\n")
-        print(f"[INFO] 1) CHAINS {ab1} AND {ag}\n")
-
-        #print("[INFO]Interface residues from chain", ab1)
-        #print(int1, "\n")
-        #print("[INFO] Interface residues from chain", ag)
-        #print(int2, "\n")
-        # print("[INFO] Interacting pairs")
-        # print(detected_interactions, "\n")
-        #print("[INFO] Additional interacting residues (neighborhood = 2 residues) in chain", ab1)
-        #print(intchain1_extended, "\n")
-        #print("[INFO] Additional interacting residues (neighborhood = 2 residues) in chain", ag)
-        # print(intchain2_extended, "\n")
-        print("[INFO] Code for PELE com_distance metric \n")
+        print(f"\n[INFO] 1) CHAINS {ab1} AND {ag}\n")
+        
+        print("\n[INFO] Code for PELE com_distance metric \n")
         InterfaceAnalyzer.pele_com_distance(int1, int2, ab1, ag)
+        
+        print(f"\n[INFO] CODE FOR PELE INTERACTING RESIDUES (Check for errors just in case!)")
+        InterfaceAnalyzer.pele_interacting_res(int1, ab1, int2, ag)
+        
 
     # For ANTIBODIES
 
@@ -59,41 +53,29 @@ if __name__ == "__main__":
         print("----------------------------------------------------------------------\n")
 
         int1_1, int2_1, detected_interactions, int1_1_extended, int2_1_extended = InterfaceAnalyzer.run(pdb, args.ab1, args.ag, distance_threshold)
-        print(f"[INFO] 1) CHAINS {ab1} AND {ag}")
-        #print("[INFO]Interface residues from chain", ab1)
-        #print(int1_1, "\n")
-        #print("[INFO] Interface residues from chain", ag)
-        #print(int2_1, "\n")
-        #print("[INFO] Interacting pairs")
-        #print(detected_interactions, "\n")
-        #print("[INFO] Additional interacting residues (neighborhood = 2 residues) in chain", ab1)
-        #print(intchain1_extended, "\n")
-        #print("[INFO] Additional interacting residues (neighborhood = 2 residues) in chain", ag)
-        #print(intchain2_extended, "\n")
-        print("[INFO] Code for PELE com_distance metric")
+        print(f"\n[INFO] 1) CHAINS {ab1} AND {ag}")
+        
+        print("\n[INFO] Code for PELE com_distance metric")
         InterfaceAnalyzer.pele_com_distance(int1_1, int2_1, ab1, ag)
 
         print(f"\n[INFO] 2) CHAINS {ab2} AND {ag}")
         int1_2, int2_2, detected_interactions, int1_2_extended, int2_2_extended = InterfaceAnalyzer.run(pdb, args.ab2, args.ag, distance_threshold)
-        #print("\n[INFO] Interface residues from chain", ab2)
-        #print(int1_2, "\n")
-        #print("[INFO] Interface residues from chain", ag)
-        #print(int2_2, "\n")
-        #print("[INFO] Interacting pairs")
-        #print(detected_interactions, "\n")
-        #print("[INFO] Additional interacting residues (neighborhood = 2 residues) in chain", ab2)
-        #print(intchain1_extended, "\n")
-        #print("[INFO] Additional interacting residues (neighborhood = 2 residues) in chain", ag)
-        #print(intchain2_extended, "\n")
-        print("[INFO] Code for PELE com_distance metric")
+        
+        print("\n[INFO] Code for PELE com_distance metric")
         InterfaceAnalyzer.pele_com_distance(int1_2, int2_2, ab2, ag)
 
+        print(f"\n[INFO] CODE FOR PELE INTERACTING RESIDUES (Check for errors just in case!)")
+        InterfaceAnalyzer.pele_interacting_res(int1_1, ab1, int2_1, ag, int1_2, ab2, int2_2, ag)
 
 
 
-                            ####### Residues to omit ######## TODO Create a PELETask builder in a class and include this
 
-        print(f"\n[INFO] SELECTIONS TO OMIT (residues with CA distance < 10 Angstrom)")
+
+
+
+
+                            ####### Residues to omit ######## TODO Create a method in interface analyzer
+        print(f"\n[INFO] SELECTIONS TO OMIT (residues with CA distance < 10 Angstrom with neighborhood = 2)")
         def del_repeated(lst):
             """
             Deletes repeated elements in a list
@@ -105,25 +87,20 @@ if __name__ == "__main__":
                 else:
                     continue
             return result
-
         # Analyze antibodies interface
         ab1, ab2, d, ab1_extended, ab2_extended = InterfaceAnalyzer.run(pdb, args.ab1, args.ab2, distance_threshold=10)
-
         # Selected residues with the antigen amplified by neighborhood (we dont want to omit anything who has interface selected res around)
         ab1Antigen_lst = int1_1_extended['residue_number'].to_list()
         ab2Antigen_lst = int1_2_extended['residue_number'].to_list()
         ab1Antigen_lst = sorted(del_repeated(ab1Antigen_lst))
         ab2Antigen_lst = sorted(del_repeated(ab2Antigen_lst))
-
         # Making the selection to omit tag
-
         ab1_lst = ab1_extended['residue_number'].to_list() # we get the extended list because we want to omit the neighbors between omitted residues
         ab2_lst = ab2_extended['residue_number'].to_list()
         ab1_lst = sorted(del_repeated(ab1_lst))
         ab2_lst = sorted(del_repeated(ab2_lst))
         #print("Esto es ab1_lst", ab1_lst)
         #print("Esto es ab2_lst", ab2_lst)
-
         ab1_lst_updated = []
         for element in ab1_lst:
             if element in ab1Antigen_lst:
@@ -136,17 +113,12 @@ if __name__ == "__main__":
                 continue
             else:
                 ab2_lst_updated.append(element)
-
         ab1_lst_updated = sorted(del_repeated(ab1_lst_updated))
         ab2_lst_updated = sorted(del_repeated(ab2_lst_updated))
-
         ab1_lst_updated_chname = [f"{args.ab1}:" + str(element) for element in ab1_lst_updated]
         ab1_lst_updated_chname_mod = ['"' + element + '"' for element in ab1_lst_updated_chname]
         pele_code_1 = ', '.join(ab1_lst_updated_chname_mod)
-
-
         ab2_lst_updated_chname = [f"{args.ab2}:" + str(element) for element in ab2_lst_updated]
         ab2_lst_updated_chname_mod = ['"' + element + '"' for element in ab2_lst_updated_chname]
         pele_code_2 = ', '.join(ab2_lst_updated_chname_mod)
-
         print('"selectionToOmit": { "links": { "ids":[' + str(pele_code_1) + ', ' + str(pele_code_2) + ']}},')

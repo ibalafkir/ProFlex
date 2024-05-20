@@ -166,3 +166,84 @@ class InterfaceAnalyzer:
         print('\t\t"links": { "ids":[' + str(pele_code_2) + ']}')
         print('\t\t}')
         print("},")  
+
+
+    def pele_interacting_res(int1, id1, int2, id2, int3=None, id3=None, int4=None, id4=None):
+        """
+        Int1 should be the selected residues of the first ab or nb chain
+        Int2 should be the selected residues of the antigen with respect to the previous chain
+        Int3 should be the selected residues of the second ab 
+        Int4 should be the selected residues of the antigen with respect to the previous chain
+        
+        Int2 and Int4 are merged to avoid repetitions
+        
+        """
+        def del_repeated(lst):
+            """
+            Deletes repeated elements in a list
+            """
+            result = []
+            for i in lst:
+                if i not in result:
+                    result.append(i)
+                else:
+                    continue
+            return result
+        
+        if int3 is None and id3 is None and int4 is None and id4 is None:
+            
+            int1_resnum = int1['residue_number'].to_list()
+            int1_resnum_sorted_unique = sorted(del_repeated(int1_resnum))
+            int1_resnum_sorted_unique_chname = [f"{id1}:" + str(element) for element in int1_resnum_sorted_unique]
+            int1_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int1_resnum_sorted_unique_chname]
+            pele_code_1 = ', '.join(int1_resnum_sorted_unique_chname_mod)
+            
+            int2_resnum = int2['residue_number'].to_list()
+            int2_resnum_sorted_unique = sorted(del_repeated(int2_resnum))
+            int2_resnum_sorted_unique_chname = [f"{id2}:" + str(element) for element in int2_resnum_sorted_unique]
+            int2_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int2_resnum_sorted_unique_chname]
+            pele_code_2 = ', '.join(int2_resnum_sorted_unique_chname_mod)
+            
+            print('"links": { "ids":[' + str(pele_code_1) + ', ' + str(pele_code_2) + ']},')
+            
+        
+        else:
+                    
+            int1_resnum = int1['residue_number'].to_list()
+            int1_resnum_sorted_unique = sorted(del_repeated(int1_resnum))
+            int1_resnum_sorted_unique_chname = [f"{id1}:" + str(element) for element in int1_resnum_sorted_unique]
+            int1_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int1_resnum_sorted_unique_chname]
+            pele_code_1 = ', '.join(int1_resnum_sorted_unique_chname_mod)
+            
+            int2_resnum = int2['residue_number'].to_list()
+            int2_resnum_sorted_unique = sorted(del_repeated(int2_resnum))
+            int4_resnum = int4['residue_number'].to_list()
+            int4_resnum_sorted_unique = sorted(del_repeated(int4_resnum))
+            
+            newIntAg_resnum = []
+            for i in int2_resnum_sorted_unique:
+                if i not in newIntAg_resnum:
+                    newIntAg_resnum.append(i)
+                else:
+                    continue
+            for i in int4_resnum_sorted_unique:
+                if i not in newIntAg_resnum:
+                    newIntAg_resnum.append(i)
+                else:
+                    continue
+            newIntAg_resnum_sorted_unique = sorted(newIntAg_resnum)
+            newIntAg_resnum_sorted_unique_chname = [f"{id2}:" + str(element) for element in newIntAg_resnum_sorted_unique]
+            newIntAg_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in newIntAg_resnum_sorted_unique_chname]
+            pele_code_2 = ', '.join(newIntAg_resnum_sorted_unique_chname_mod)
+            
+            
+            int3_resnum = int3['residue_number'].to_list()
+            int3_resnum_sorted_unique = sorted(del_repeated(int3_resnum))
+            int3_resnum_sorted_unique_chname = [f"{id3}:" + str(element) for element in int3_resnum_sorted_unique]
+            int3_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in int3_resnum_sorted_unique_chname]
+            pele_code_3 = ', '.join(int3_resnum_sorted_unique_chname_mod)
+            
+            
+            
+            
+            print('"links": { "ids":[' + str(pele_code_1) + ', ' + str(pele_code_2) + ', ' + str(pele_code_3) + ']}')
