@@ -5,7 +5,7 @@ Processes a PDB to adjust it to the pipeline:
 - Removes HETATOMS (ligands, metals, waters...)
 - Removes other unnecessary lines
 
-A PDB without any gaps is expected
+A PDB without any structural gaps is expected
 """
 
 import argparse
@@ -14,19 +14,29 @@ import os
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(
-        description='Creates a new PDB file fixed for insertion codes'
-        )
+    parser = argparse.ArgumentParser(description='Creates a new PDB file fixed for insertion codes')
     parser.add_argument('-pdb', type=str, help='Path to the PDB file')
-    parser.add_argument('-chains', type=str, help='String of chains to keep')
-    
+    parser.add_argument('-ab1', type=str, help='Antibody chain 1 or nanobody single chain')
+    parser.add_argument('-ab2', type=str, help='Antibody chain 2', required=False)
+    parser.add_argument('-ag', type=str, help='String of chains to keep')
     args = parser.parse_args()
     
     pdb_file = args.pdb
-    chid = args.chains
-    chidd = chid.split(",")
+    ab1 = args.ab1
+    ab2 = args.ab2
+    ag = args.ag
+
+    chains_to_keep = []
+    if ab2:
+        chains_to_keep = [ab1, ab2, ag]
+        print("Keeping", chains_to_keep)
+    else:
+        chains_to_keep = [ab1, ag]
+        print("Keeping", chains_to_keep)
+
+
     print("Saving atom lines from wanted chains and tidying...")
-    PdbHandler.chain(pdb_file,chidd)
+    PdbHandler.chain(pdb_file,chains_to_keep)
     PdbHandler.tidy(pdb_file[:-4]+'_ch.pdb')
 
     print("Fixing insertions...")
