@@ -189,7 +189,19 @@ class InterfaceAnalyzer:
                 else:
                     continue
             return result
+                
+        def extend_neighbourhood_ag(lst):
+            result = []
+            for i in range(len(lst) - 1):
+                result.append(lst[i])
+                dif = lst[i+1] - lst[i]
+                if 2 <= dif <= 4:
+                    for j in range(1, dif):
+                        result.append(lst[i] + j)
+            result.append(lst[-1])  # Añadimos el último elemento de la lista original
+            return result
         
+        # Nb-Ag case (1 interface)
         if int3 is None and id3 is None and int4 is None and id4 is None:
             
             int1_resnum = int1['residue_number'].to_list()
@@ -206,9 +218,8 @@ class InterfaceAnalyzer:
             
             print('"links": { "ids":[' + str(pele_code_1) + ', ' + str(pele_code_2) + ']},')
             
-        
+        # Ab-Ag case (2 interfaces)
         else:
-                    
             int1_resnum = int1['residue_number'].to_list()
             int1_resnum_sorted_unique = sorted(del_repeated(int1_resnum))
             int1_resnum_sorted_unique_chname = [f"{id1}:" + str(element) for element in int1_resnum_sorted_unique]
@@ -220,6 +231,7 @@ class InterfaceAnalyzer:
             int4_resnum = int4['residue_number'].to_list()
             int4_resnum_sorted_unique = sorted(del_repeated(int4_resnum))
             
+            # Merging antigen selected residues
             newIntAg_resnum = []
             for i in int2_resnum_sorted_unique:
                 if i not in newIntAg_resnum:
@@ -232,6 +244,11 @@ class InterfaceAnalyzer:
                 else:
                     continue
             newIntAg_resnum_sorted_unique = sorted(newIntAg_resnum)
+            
+            ## Extended the antigen interface by neighbourhood = 2
+            newIntAg_resnum_sorted_unique = extend_neighbourhood_ag(newIntAg_resnum_sorted_unique)
+            ##
+            
             newIntAg_resnum_sorted_unique_chname = [f"{id2}:" + str(element) for element in newIntAg_resnum_sorted_unique]
             newIntAg_resnum_sorted_unique_chname_mod = ['"' + element + '"' for element in newIntAg_resnum_sorted_unique_chname]
             pele_code_2 = ', '.join(newIntAg_resnum_sorted_unique_chname_mod)

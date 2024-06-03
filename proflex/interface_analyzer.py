@@ -38,11 +38,14 @@ if __name__ == "__main__":
         print("--------------------------------------------------------------------------------------------------------------\n")
         print(f"\n[INFO] 1) CHAINS {ab1} AND {ag}\n")
         
-        print("\n[INFO] Code for PELE com_distance metric \n")
+        print("\n Code for PELE com_distance metric \n")
         InterfaceAnalyzer.pele_com_distance(int1, int2, ab1, ag)
-        
-        print(f"\n[INFO] CODE FOR PELE INTERACTING RESIDUES (Check for errors just in case!)")
+
+        print(f"\n Code for PELE interacting residues (Threshold = 8A between CA-CA)")
         InterfaceAnalyzer.pele_interacting_res(int1, ab1, int2, ag)
+    
+        print(f"\n Code for PELE interacting residues (Threshold = 8A between CA-CA amplified by neighborhood of 2 residues)")
+        InterfaceAnalyzer.pele_interacting_res(int1_extended, ab1, int2_extended, ag)
         
 
     # For ANTIBODIES
@@ -53,29 +56,28 @@ if __name__ == "__main__":
         print("----------------------------------------------------------------------\n")
 
         int1_1, int2_1, detected_interactions, int1_1_extended, int2_1_extended = InterfaceAnalyzer.run(pdb, args.ab1, args.ag, distance_threshold)
+        int1_2, int2_2, detected_interactions, int1_2_extended, int2_2_extended = InterfaceAnalyzer.run(pdb, args.ab2, args.ag, distance_threshold)
+
         print(f"\n[INFO] 1) CHAINS {ab1} AND {ag}")
         
-        print("\n[INFO] Code for PELE com_distance metric")
+        print("\n Code for PELE com_distance metric")
         InterfaceAnalyzer.pele_com_distance(int1_1, int2_1, ab1, ag)
 
         print(f"\n[INFO] 2) CHAINS {ab2} AND {ag}")
-        int1_2, int2_2, detected_interactions, int1_2_extended, int2_2_extended = InterfaceAnalyzer.run(pdb, args.ab2, args.ag, distance_threshold)
         
-        print("\n[INFO] Code for PELE com_distance metric")
+        print("\n Code for PELE com_distance metric")
         InterfaceAnalyzer.pele_com_distance(int1_2, int2_2, ab2, ag)
 
-        print(f"\n[INFO] CODE FOR PELE INTERACTING RESIDUES (Check for errors just in case!)")
+        print(f"\n[INFO] Merged interface")
+        
+        print(f"\n Code for PELE interacting residues (Threshold = 8A between CA-CA)")
         InterfaceAnalyzer.pele_interacting_res(int1_1, ab1, int2_1, ag, int1_2, ab2, int2_2, ag)
 
-
-
-
-
-
-
+        print(f"\n Code for PELE interacting residues (Threshold = 8A between CA-CA) amplified by neighborhood of 2 residues")
+        InterfaceAnalyzer.pele_interacting_res(int1_1_extended, ab1, int2_1_extended, ag, int1_2_extended, ab2, int2_2_extended, ag)
 
                             ####### Residues to omit ######## TODO Create a method in interface analyzer
-        print(f"\n[INFO] SELECTIONS TO OMIT (residues with CA distance < 10 Angstrom with neighborhood = 2)")
+        print(f"\n Code for PELE omitting residues in side chain prediction (residues with CA distance < 10 Angstrom with neighborhood = 2)")
         def del_repeated(lst):
             """
             Deletes repeated elements in a list
