@@ -26,7 +26,7 @@ In general, Schrodinger with Prime license through its protein preparation wizar
 
 Generally, for filling missing loops and side chains, creating disulfide bonds between proximal sulfurs adding and optimizing hydrogens and minimizing in the OPLS force field run:
 ```bash
-$ $SCHRODINGER input.pdb output.pdb -rehtreat -disulfides -fillloops -fillsidechains -propka_pH 7.0 -minimize_adj_h -f OPLS_2005
+$ $SCHRODINGER input.pdb output.pdb -rehtreat -disulfides -fillloops -fillsidechains -propka_pH 7.4 -minimize_adj_h -f OPLS_2005
 ```
 Although bear in mind that each system has its own peculiarities and more preparation actions might need to be run.
 
