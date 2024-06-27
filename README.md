@@ -83,3 +83,4 @@ The code will be improved with the next features:
 - Tests
 - Include diffusion, relax and pele runners
 - Automatize the pipeline
+- Improve classes
