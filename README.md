@@ -81,3 +81,5 @@ The code will be improved with the next features:
 - Interface and neighbourhood amplification (use of biopython and increase the selected regions)
 - More preprocessing/postprocessing adjustments if needed
 - Tests
+- Include diffusion, relax and pele runners
+- Automatize the pipeline
